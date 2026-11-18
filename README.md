@@ -66,6 +66,13 @@ Run `Plyph-Setup.exe` and follow the instructions. Find Plyph in the Start menu.
 
 Plyph runs in the system tray. Open its tray menu for **Settings** or **Exit Plyph**.
 
+## Documentation
+
+- [Getting started](docs/GETTING_STARTED.md) — Install Plyph, choose a provider, and run your first action.
+- [Privacy and access](docs/PRIVACY.md) — See what Plyph reads, sends, and stores.
+- [Compatibility and limitations](docs/LIMITATIONS.md) — Find out where text selection and replacement can vary.
+- [All Windows guides](docs/index.md) — Connect ChatGPT without an API key, customize the toolbar, and create reusable actions.
+
 ## Getting Started
 
 1. Open **Settings → AI Providers**, choose a provider, and select a model.
