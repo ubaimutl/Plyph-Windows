@@ -1,6 +1,5 @@
 using Microsoft.UI.Input;
 using Microsoft.UI.Text;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -27,7 +26,7 @@ public sealed partial class CompactResultWindow : Window
     private readonly Action? _onCancelStandalone;
 
     private ResultSession? _session;
-    private Func<string, Task<ResultSession?>>? _onAskSubmit;
+    private Func<string, bool, Task<ResultSession?>>? _onAskSubmit;
     private bool _refining;
     private bool _discussing;
     private bool _enlarged;
@@ -75,7 +74,6 @@ public sealed partial class CompactResultWindow : Window
                 return;
             if (e.WindowActivationState == WindowActivationState.Deactivated)
             {
-                ApplyAlwaysOnTopSafe(_pinned);
                 // The activation event also catches fast clicks that fall between timer ticks.
                 if (_settings.GetBoolean("result-popup-dismiss-on-outside-click") &&
                     (NativeMethods.IsKeyDown(NativeMethods.VK_LBUTTON) ||
@@ -120,7 +118,8 @@ public sealed partial class CompactResultWindow : Window
         IPlyphSettings settings,
         WinPoint anchorPoint,
         string providerBadge,
-        Func<string, Task<ResultSession?>> onSubmit,
+        bool hasSelection,
+        Func<string, bool, Task<ResultSession?>> onSubmit,
         Action<string> onCopyError,
         Action onOpenSettings,
         Action onCancel)
@@ -129,7 +128,7 @@ public sealed partial class CompactResultWindow : Window
         {
             _onAskSubmit = onSubmit
         };
-        win.ShowAskInputMode(providerBadge);
+        win.ShowAskInputMode(providerBadge, hasSelection);
         return win;
     }
 
@@ -155,7 +154,7 @@ public sealed partial class CompactResultWindow : Window
             RenderDiscussionTranscript();
     }
 
-    private void ShowAskInputMode(string providerBadge)
+    private void ShowAskInputMode(string providerBadge, bool hasSelection)
     {
         _isStandaloneError = false;
         ActionIconHost.Content = ActionIcons.Create("ask", 17);
@@ -165,6 +164,8 @@ public sealed partial class CompactResultWindow : Window
         ProviderBadgeText.Visibility = Visibility.Visible;
         PinButton.Visibility = Visibility.Collapsed;
 
+        IncludeSelectionBox.IsChecked = hasSelection;
+        IncludeSelectionBox.Visibility = hasSelection ? Visibility.Visible : Visibility.Collapsed;
         AskInputPanel.Visibility = Visibility.Visible;
         WorkingPanel.Visibility = Visibility.Collapsed;
         ResultBodyPanel.Visibility = Visibility.Collapsed;
@@ -302,22 +303,6 @@ public sealed partial class CompactResultWindow : Window
         PositionPopup(initial: initialResize);
     }
 
-    private void ApplyAlwaysOnTopSafe(bool topmost)
-    {
-        if (_isClosing || !OperatingSystem.IsWindows())
-            return;
-        if (_chrome.Hwnd == IntPtr.Zero || !NativeMethods.IsWindow(_chrome.Hwnd))
-            return;
-        try
-        {
-            if (AppWindow?.Presenter is OverlappedPresenter p)
-                p.IsAlwaysOnTop = topmost;
-        }
-        catch
-        {
-        }
-    }
-
     private void BeginClose()
     {
         if (_isClosing) return;
@@ -437,7 +422,7 @@ public sealed partial class CompactResultWindow : Window
         if (string.IsNullOrEmpty(instruction))
         {
             StatusInfoBar.Severity = InfoBarSeverity.Error;
-            StatusInfoBar.Message = "Enter an instruction to continue.";
+            StatusInfoBar.Message = "Enter a question or request.";
             StatusInfoBar.IsClosable = false;
             StatusInfoBar.IsOpen = true;
             PositionPopup(initial: false);
@@ -448,7 +433,7 @@ public sealed partial class CompactResultWindow : Window
         ShowWorkingMode("Ask AI", $"Asking {ProviderBadgeText.Text}…");
         try
         {
-            var nextSession = await _onAskSubmit(instruction);
+            var nextSession = await _onAskSubmit(instruction, IncludeSelectionBox.IsChecked == true);
             if (_isClosing)
             {
                 nextSession?.Dispose();
@@ -594,7 +579,6 @@ public sealed partial class CompactResultWindow : Window
         _pinned = PinButton.IsChecked == true;
         if (_session != null)
             _session.Pinned = _pinned;
-        ApplyAlwaysOnTopSafe(_pinned);
     }
 
     private void RefineToggle_Click(object sender, RoutedEventArgs e) =>

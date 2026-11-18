@@ -263,7 +263,7 @@ public static class InstallerEngine
             if (key == null)
                 return;
             key.SetValue("DisplayName", "Plyph");
-            key.SetValue("DisplayVersion", "1.0.0");
+            key.SetValue("DisplayVersion", "1.1.0");
             key.SetValue("Publisher", "ubai.dev");
             key.SetValue("DisplayIcon", targetExe);
             key.SetValue("InstallLocation", installDir);

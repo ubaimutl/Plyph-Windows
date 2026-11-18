@@ -4,8 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="6" Padding="28,16,28,32" MaxWidth="920" HorizontalAlignment="Stretch">
+    <ScrollViewer HorizontalScrollMode="Disabled"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="6" Padding="28,16,28,32" MaxWidth="920" HorizontalAlignment="Left">
             <TextBlock Text="Shortcuts &amp; Capture" Style="{StaticResource TitleTextBlockStyle}" />
             <TextBlock Text="Configure global Windows hotkeys and fine-tune how Plyph reads selected text."
                        Style="{StaticResource BodyTextBlockStyle}"
@@ -18,7 +20,7 @@
 
             <controls:SettingsCard x:Name="AskShortcutCard"
                                    Header="Ask"
-                                   Description="Prompt AI with a question about your selected text.">
+                                   Description="Ask a question with or without selected text.">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE897;" />
                 </controls:SettingsCard.HeaderIcon>

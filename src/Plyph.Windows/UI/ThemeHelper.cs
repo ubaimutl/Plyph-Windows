@@ -107,6 +107,19 @@ public static class ThemeHelper
         ApplyTheme(window, settings, preferAcrylic);
     }
 
+    public static void ConfigureTitleBar(Window window, FrameworkElement customTitleBar)
+    {
+        // AppWindow ignores caption button colors on Windows 10.
+        if (!NativeMethods.IsWindows11OrGreater())
+        {
+            customTitleBar.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        window.ExtendsContentIntoTitleBar = true;
+        window.SetTitleBar(customTitleBar);
+    }
+
     public static bool ApplyBackdrop(Window window, bool preferAcrylic = false)
     {
         if (IsHighContrastEnabled() || !NativeMethods.IsWindows11OrGreater())

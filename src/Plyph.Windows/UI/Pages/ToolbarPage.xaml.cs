@@ -40,6 +40,7 @@ public sealed partial class ToolbarPage : Page
         var settings = context.Settings;
         ShowFloatingToggle.IsOn = settings.GetBoolean("show-floating-button");
         ToolbarLayoutCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Layouts, settings.GetString("floating-toolbar-layout")));
+        ToolbarOrientationCombo.SelectedIndex = settings.GetString("floating-toolbar-orientation") == "vertical" ? 1 : 0;
         ToolbarPositionCombo.SelectedIndex = Math.Max(0, Array.IndexOf(Positions, settings.GetString("floating-toolbar-position")));
         var scale = settings.GetDouble("floating-toolbar-scale");
         if (!double.IsFinite(scale) || scale <= 0)
@@ -58,7 +59,7 @@ public sealed partial class ToolbarPage : Page
 
     private void UpdateControlAvailability()
     {
-        ToolbarLayoutCombo.IsEnabled = ToolbarPositionCombo.IsEnabled =
+        ToolbarLayoutCombo.IsEnabled = ToolbarOrientationCombo.IsEnabled = ToolbarPositionCombo.IsEnabled =
             ScaleCombo.IsEnabled = ToolbarAccentToggle.IsEnabled = ShowFloatingToggle.IsOn;
         FeedbackPosCombo.IsEnabled = FeedbackToggle.IsOn;
     }
@@ -80,6 +81,12 @@ public sealed partial class ToolbarPage : Page
     {
         if (ToolbarPositionCombo.SelectedIndex >= 0)
             Settings?.SetString("floating-toolbar-position", Positions[ToolbarPositionCombo.SelectedIndex]);
+    }
+
+    private void ToolbarOrientationCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ToolbarOrientationCombo.SelectedIndex >= 0)
+            Settings?.SetString("floating-toolbar-orientation", ToolbarOrientationCombo.SelectedIndex == 1 ? "vertical" : "horizontal");
     }
 
     private void ToolbarAccentToggle_Toggled(object sender, RoutedEventArgs e)

@@ -57,7 +57,7 @@ public sealed partial class ShortcutsPage : Page
 
     private void RefreshAllShortcutButtons()
     {
-        RefreshShortcutCard("ask-shortcut", AskShortcutCard, AskShortcutButton, AskClearButton, "Prompt AI with a question about your selected text.");
+        RefreshShortcutCard("ask-shortcut", AskShortcutCard, AskShortcutButton, AskClearButton, "Ask a question with or without selected text.");
         RefreshShortcutCard("correct-shortcut", CorrectShortcutCard, CorrectShortcutButton, CorrectClearButton, "Fix grammar, spelling, and punctuation immediately.");
         RefreshShortcutCard("rewrite-shortcut", RewriteShortcutCard, RewriteShortcutButton, RewriteClearButton, "Improve clarity and natural flow.");
         RefreshShortcutCard("actions-shortcut", ActionsShortcutCard, ActionsShortcutButton, ActionsClearButton, "Show the floating actions menu anywhere.");

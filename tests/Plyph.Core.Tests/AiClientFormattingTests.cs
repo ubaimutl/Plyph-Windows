@@ -135,6 +135,32 @@ public sealed class AiClientFormattingTests
     }
 
     [Theory]
+    [InlineData("groq", "The meeting moved to Friday.")]
+    [InlineData("groq", "")]
+    [InlineData("gemini", "The meeting moved to Friday.")]
+    [InlineData("chatgpt", "")]
+    public async Task AskSendsTheQuestionAsTheRequestAndSelectionAsOptionalContext(string provider, string selection)
+    {
+        using var harness = new TestHarness(provider) { ResponseText = "The meeting is on Friday." };
+        const string question = "What day is the meeting?";
+
+        var result = await harness.Client.TransformAsync(selection, "ask", question);
+
+        var request = Assert.Single(harness.Requests).Body;
+        var userText = TestHarness.ExtractUserText(request);
+        if (selection.Length == 0)
+            Assert.Equal(question, userText);
+        else
+        {
+            Assert.Contains(question, userText);
+            Assert.Contains(selection, userText);
+        }
+        Assert.Contains("Answer the user's question", TestHarness.ExtractGuidance(request));
+        Assert.DoesNotContain("Return only the transformed text", userText);
+        Assert.Equal(harness.ResponseText, result);
+    }
+
+    [Theory]
     [InlineData("ollama")]
     [InlineData("cloudflare")]
     [InlineData("bai")]

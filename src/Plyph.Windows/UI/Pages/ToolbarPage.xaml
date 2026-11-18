@@ -34,8 +34,19 @@
                 </ComboBox>
             </controls:SettingsCard>
 
+            <controls:SettingsCard Header="Toolbar orientation"
+                                   Description="Arrange actions in a horizontal row or a vertical strip of icons.">
+                <ComboBox x:Name="ToolbarOrientationCombo"
+                          AutomationProperties.AutomationId="ToolbarOrientationCombo"
+                          MinWidth="160"
+                          SelectionChanged="ToolbarOrientationCombo_SelectionChanged">
+                    <ComboBoxItem Content="Horizontal" />
+                    <ComboBoxItem Content="Vertical" />
+                </ComboBox>
+            </controls:SettingsCard>
+
             <controls:SettingsCard Header="Floating toolbar placement"
-                                   Description="Place the toolbar beside your selected text (falls back to cursor) or near the cursor.">
+                                   Description="Place the toolbar beside selected text when its bounds are available, or near the mouse cursor.">
                 <controls:SettingsCard.HeaderIcon>
                     <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE81D;" />
                 </controls:SettingsCard.HeaderIcon>

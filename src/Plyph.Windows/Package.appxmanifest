@@ -9,7 +9,7 @@
   <Identity
     Name="dev.ubai.Plyph"
     Publisher="CN=ubai.dev"
-    Version="1.0.0.0" />
+    Version="1.1.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="d6a4e182-7329-4a93-a102-8c9f61e0b412" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
 

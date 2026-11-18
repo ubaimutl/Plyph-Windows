@@ -102,6 +102,7 @@ public static class NativeMethods
 
     public const uint SMTO_ABORTIFHUNG = 0x0002;
     public const int EM_GETSEL = 0x00B0;
+    private const int EM_POSFROMCHAR = 0x00D6;
 
     public const int CURSOR_SHOWING = 0x00000001;
     public const int IDC_ARROW = 32512;
@@ -406,6 +407,9 @@ public static class NativeMethods
     [DllImport("user32.dll")]
     private static extern bool ScreenToClient(IntPtr hWnd, ref POINT point);
 
+    [DllImport("user32.dll")]
+    private static extern bool ClientToScreen(IntPtr hWnd, ref POINT point);
+
     public static bool IsPointInClientArea(IntPtr hwnd, Point screenPoint)
     {
         var point = new POINT { X = screenPoint.X, Y = screenPoint.Y };
@@ -459,6 +463,11 @@ public static class NativeMethods
         uint fuFlags,
         uint uTimeout,
         out IntPtr lpdwResult);
+
+    [DllImport("user32.dll", EntryPoint = "SendMessageTimeoutW")]
+    private static extern IntPtr SendMessageTimeoutValue(
+        IntPtr hWnd, uint message, IntPtr wParam, IntPtr lParam,
+        uint flags, uint timeout, out IntPtr result);
 
     [DllImport("user32.dll")]
     public static extern IntPtr SetWinEventHook(
@@ -625,15 +634,52 @@ public static class NativeMethods
         }
     }
 
-    public static bool HasWin32EditSelection(IntPtr foregroundWindow)
+    public static bool HasWin32EditSelection(IntPtr foregroundWindow) =>
+        TryGetWin32EditSelection(foregroundWindow, out _, out _, out _);
+
+    public static Rectangle? GetWin32EditSelectionBounds(IntPtr foregroundWindow)
     {
+        if (!TryGetWin32EditSelection(foregroundWindow, out var control, out var start, out var end) ||
+            !string.Equals(GetWindowClassName(control), "Edit", StringComparison.OrdinalIgnoreCase) ||
+            !TryGetEditCharacterPoint(control, end - 1, out var last))
+        {
+            return null;
+        }
+
+        var lineHeight = Math.Max(1, (int)Math.Round(16 * Math.Max(1.0, GetDpiForWindow(control) / 96.0)));
+        var right = TryGetEditCharacterPoint(control, end, out var after) && after.Y == last.Y
+            ? after.X
+            : last.X + lineHeight / 2;
+        var left = TryGetEditCharacterPoint(control, start, out var first) && first.Y == last.Y ? first.X : last.X;
+        return new Rectangle(Math.Min(left, right), last.Y, Math.Max(1, Math.Abs(right - left)), lineHeight);
+    }
+
+    private static bool TryGetEditCharacterPoint(IntPtr control, int index, out POINT point)
+    {
+        point = default;
+        if (SendMessageTimeoutValue(control, EM_POSFROMCHAR, (IntPtr)index, IntPtr.Zero,
+                SMTO_ABORTIFHUNG, 30, out var result) == IntPtr.Zero ||
+            unchecked((int)result.ToInt64()) == -1 || !GetClientRect(control, out var client))
+        {
+            return false;
+        }
+
+        var packed = unchecked((int)result.ToInt64());
+        point = new POINT { X = (short)packed, Y = (short)(packed >> 16) };
+        return point.X >= client.Left && point.X < client.Right &&
+            point.Y >= client.Top && point.Y < client.Bottom && ClientToScreen(control, ref point);
+    }
+
+    private static bool TryGetWin32EditSelection(IntPtr foregroundWindow, out IntPtr targetHwnd, out int start, out int end)
+    {
+        targetHwnd = foregroundWindow;
+        start = end = 0;
         if (!OperatingSystem.IsWindows() || foregroundWindow == IntPtr.Zero)
             return false;
         try
         {
             var tid = GetWindowThreadProcessId(foregroundWindow, out _);
             var gti = new GUITHREADINFO { cbSize = Marshal.SizeOf<GUITHREADINFO>() };
-            var targetHwnd = foregroundWindow;
             if (tid != 0 && GetGUIThreadInfo(tid, ref gti) && gti.hwndFocus != IntPtr.Zero)
                 targetHwnd = gti.hwndFocus;
 
@@ -649,8 +695,8 @@ public static class NativeMethods
             var res = SendMessageTimeout(
                 targetHwnd,
                 EM_GETSEL,
-                out var start,
-                out var end,
+                out start,
+                out end,
                 SMTO_ABORTIFHUNG,
                 30,
                 out _);

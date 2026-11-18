@@ -123,7 +123,7 @@ using System.Text.RegularExpressions;
 
 [assembly: AssemblyTitle("Plyph Portable")]
 [assembly: AssemblyProduct("Plyph")]
-[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
 
 internal static class PortableLauncher
 {

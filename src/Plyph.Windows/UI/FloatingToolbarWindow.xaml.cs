@@ -119,6 +119,8 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
         return raw is "icons" or "button" ? raw : "bar";
     }
 
+    private bool IsVertical => _settings.GetString("floating-toolbar-orientation") == "vertical";
+
     public void RefreshTheme()
     {
         if (_disposed) return;
@@ -254,10 +256,17 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
     private Brush GetPlyphMarkBrush()
     {
         var useAccent = _settings.GetBoolean("toolbar-accent-icon");
-        return ThemeHelper.GetThemeBrush(
-                   RootGrid,
-                   useAccent ? "AccentTextFillColorPrimaryBrush" : "TextFillColorPrimaryBrush")
-               ?? new SolidColorBrush(Colors.White);
+        var highContrast = ThemeHelper.IsHighContrastEnabled();
+        var isDark = ThemeHelper.ShouldUseDark(_settings);
+        if (highContrast || useAccent)
+        {
+            var key = highContrast ? "SystemColorWindowTextColorBrush" : "AccentTextFillColorPrimaryBrush";
+            var themed = ThemeHelper.ResolveBrushForTheme(ThemeHelper.ResolveElementTheme(_settings), isDark, highContrast, key);
+            if (themed != null)
+                return themed;
+        }
+
+        return new SolidColorBrush(isDark ? Colors.White : Colors.Black);
     }
 
     private void RebuildContent()
@@ -272,6 +281,8 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
         var textSize = Math.Round(12 * s);
         var btnRadius = new CornerRadius(Math.Round(6 * s));
         var mode = GetLayoutMode();
+        var vertical = IsVertical && !_showingFeedback;
+        ToolbarPanel.Orientation = vertical ? Orientation.Vertical : Orientation.Horizontal;
         var isSingleButton = !_showingFeedback && mode == "button" && !_expanded;
         var pad = isSingleButton ? Math.Round(2 * s) : Math.Round(3 * s);
 
@@ -304,11 +315,11 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
         }
 
         var actions = GetQuickActions();
-        var iconsOnly = mode == "icons";
+        var iconsOnly = mode == "icons" || vertical;
 
-        if (iconsOnly || mode == "button")
+        if (mode is "icons" or "button")
         {
-            var logoBtn = CreateToolbarButton(Math.Round(26 * s), btnHeight, new Thickness(0), btnRadius);
+            var logoBtn = CreateToolbarButton(vertical ? btnHeight : Math.Round(26 * s), btnHeight, new Thickness(0), btnRadius);
             logoBtn.Content = FloatingSurfaceHelper.CreatePlyphMark(Math.Round(14 * s), markBrush);
             SetButtonLabel(logoBtn, mode == "button" ? "Collapse toolbar" : "Plyph actions");
             logoBtn.Click += (_, _) =>
@@ -324,7 +335,7 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
                 CollapseIfButtonMode();
             };
             ToolbarPanel.Children.Add(logoBtn);
-            ToolbarPanel.Children.Add(CreateDivider(s));
+            ToolbarPanel.Children.Add(CreateDivider(s, vertical));
         }
 
         var firstQuickAction = ToolbarPanel.Children.Count;
@@ -367,7 +378,7 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
             ToolbarPanel.Children.Add(btn);
         }
 
-        ToolbarPanel.Children.Add(CreateDivider(s));
+        ToolbarPanel.Children.Add(CreateDivider(s, vertical));
 
         var moreBtn = CreateToolbarButton(btnHeight, btnHeight, new Thickness(0), btnRadius);
         moreBtn.Content = new FontIcon
@@ -382,11 +393,17 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
 
         // Keep the overflow button visible even when pinned action labels take up more room.
         NativeMethods.GetWorkAreaMonitorIndex(_selectionAnchor, out var work);
-        var rowBudget = (work.Right - work.Left - 16) / _chrome.GetDpiScale()
+        var workLength = vertical ? work.Bottom - work.Top : work.Right - work.Left;
+        var budget = (workLength - 16) / _chrome.GetDpiScale()
             - pad * 2 - SurfaceBorder.BorderThickness.Left - SurfaceBorder.BorderThickness.Right;
         var dividerIndex = ToolbarPanel.Children.Count - 2;
-        while (dividerIndex > firstQuickAction && FloatingSurfaceHelper.MeasureDip(ToolbarPanel).Width > rowBudget)
+        while (dividerIndex > firstQuickAction)
+        {
+            var measured = FloatingSurfaceHelper.MeasureDip(ToolbarPanel);
+            if ((vertical ? measured.Height : measured.Width) <= budget)
+                break;
             ToolbarPanel.Children.RemoveAt(--dividerIndex);
+        }
         if (dividerIndex == firstQuickAction)
         {
             ToolbarPanel.Children.RemoveAt(dividerIndex);
@@ -573,13 +590,16 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
         return btn;
     }
 
-    private static XamlRectangle CreateDivider(double s)
+    private static XamlRectangle CreateDivider(double s, bool vertical)
     {
         return new XamlRectangle
         {
-            Width = 1,
-            Height = Math.Round(15 * s),
-            Margin = new Thickness(Math.Round(2 * s), 0, Math.Round(2 * s), 0),
+            Width = vertical ? Math.Round(15 * s) : 1,
+            Height = vertical ? 1 : Math.Round(15 * s),
+            Margin = vertical
+                ? new Thickness(0, Math.Round(2 * s), 0, Math.Round(2 * s))
+                : new Thickness(Math.Round(2 * s), 0, Math.Round(2 * s), 0),
+            HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center,
             Fill = Application.Current.Resources.TryGetValue("DividerStrokeColorDefaultBrush", out var bObj) && bObj is Brush b
                 ? b
@@ -602,35 +622,56 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
         var scale = _chrome.GetDpiScale();
         var maxWidth = Math.Max(1, (work.Right - work.Left - margin * 2) / scale);
         var maxHeight = Math.Max(1, (work.Bottom - work.Top - margin * 2) / scale);
-        var menuAbove = false;
+        var vertical = ToolbarPanel.Orientation == Orientation.Vertical;
+        var menuBeside = _extendedMenuOpen && vertical;
+        var menuBeforeToolbar = false;
+        MainStack.Orientation = menuBeside ? Orientation.Horizontal : Orientation.Vertical;
+        ExtendedDivider.Width = menuBeside ? 1 : double.NaN;
+        ExtendedDivider.Height = menuBeside ? double.NaN : 1;
+        ExtendedDivider.Margin = menuBeside ? new Thickness(3, 4, 3, 4) : new Thickness(4, 3, 4, 3);
+        ToolbarPanel.VerticalAlignment = menuBeside ? VerticalAlignment.Top : VerticalAlignment.Center;
         ToolbarPanel.Margin = new Thickness(0);
         var inset = SurfaceBorder.Padding.Left + SurfaceBorder.Padding.Right
             + SurfaceBorder.BorderThickness.Left + SurfaceBorder.BorderThickness.Right;
         var rowSize = FloatingSurfaceHelper.MeasureDip(ToolbarPanel);
-        var rowHeight = rowSize.Height + SurfaceBorder.Padding.Top + SurfaceBorder.Padding.Bottom
+        var verticalInset = SurfaceBorder.Padding.Top + SurfaceBorder.Padding.Bottom
             + SurfaceBorder.BorderThickness.Top + SurfaceBorder.BorderThickness.Bottom;
+        var rowHeight = rowSize.Height + verticalInset;
 
         if (_extendedMenuOpen)
         {
             var menuWidth = Math.Clamp(maxWidth - inset, 1, Math.Round(320 * GetToolbarScale()));
+            if (menuBeside)
+            {
+                var dividerWidth = ExtendedDivider.Width + ExtendedDivider.Margin.Left + ExtendedDivider.Margin.Right;
+                var before = (_menuOrigin.X - work.Left - margin) / scale - dividerWidth;
+                var after = (work.Right - margin - _menuOrigin.X) / scale - rowSize.Width - inset - dividerWidth;
+                menuBeforeToolbar = menuWidth > after && before > after;
+                menuWidth = Math.Clamp(menuBeforeToolbar ? before : after, 1, menuWidth);
+            }
+
             ExtendedContainer.Width = menuWidth;
             ExtendedScroll.MaxHeight = Math.Round(250 * GetToolbarScale());
 
             var menuHeight = FloatingSurfaceHelper.MeasureDip(ExtendedContainer, menuWidth).Height
-                + FloatingSurfaceHelper.MeasureDip(ExtendedDivider).Height;
+                + (menuBeside ? 0 : FloatingSurfaceHelper.MeasureDip(ExtendedDivider).Height);
             var listHeight = FloatingSurfaceHelper.MeasureDip(ExtendedScroll, menuWidth).Height;
             var below = (work.Bottom - margin - _menuOrigin.Y) / scale - rowHeight;
             var above = (_menuOrigin.Y - work.Top - margin) / scale;
-            menuAbove = menuHeight > below && above > below;
-            ExtendedScroll.MaxHeight = Math.Clamp((menuAbove ? above : below) - (menuHeight - listHeight),
+            if (!menuBeside)
+                menuBeforeToolbar = menuHeight > below && above > below;
+            var availableHeight = menuBeside ? maxHeight - verticalInset : menuBeforeToolbar ? above : below;
+            ExtendedScroll.MaxHeight = Math.Clamp(availableHeight - (menuHeight - listHeight),
                 1, ExtendedScroll.MaxHeight);
         }
 
-        var rowIndex = menuAbove ? 2 : 0;
-        if (MainStack.Children.IndexOf(ToolbarPanel) != rowIndex)
+        var toolbarIndex = menuBeforeToolbar ? 2 : 0;
+        if (MainStack.Children.IndexOf(ToolbarPanel) != toolbarIndex)
         {
             MainStack.Children.Remove(ToolbarPanel);
-            MainStack.Children.Insert(rowIndex, ToolbarPanel);
+            MainStack.Children.Insert(toolbarIndex, ToolbarPanel);
+            MainStack.Children.Remove(ExtendedDivider);
+            MainStack.Children.Insert(1, ExtendedDivider);
         }
 
         var desired = FloatingSurfaceHelper.MeasureDip(SurfaceBorder, maxWidth, maxHeight);
@@ -641,17 +682,26 @@ public sealed partial class FloatingToolbarWindow : Window, IDisposable
         if (repositionFromAnchor)
         {
             if (_lastSelectionBounds.HasValue)
-                (x, y) = FloatingSurfaceHelper.PositionNearSelectionRect(_lastSelectionBounds.Value, physW, physH, gapPx: 6);
+                (x, y) = FloatingSurfaceHelper.PositionNearSelectionRect(
+                    _lastSelectionBounds.Value, physW, physH, gapPx: 6, alignToTop: vertical);
             else
                 (x, y) = FloatingSurfaceHelper.PositionNearAnchor(anchorPoint, physW, physH, preferAbove: false, gapPx: 8);
         }
         else
         {
             var origin = _extendedMenuOpen ? _menuOrigin : anchorPoint;
-            x = Math.Clamp(origin.X, work.Left + margin, Math.Max(work.Left + margin, work.Right - physW - margin));
-            var top = menuAbove ? origin.Y - (physH - (int)Math.Ceiling(rowHeight * scale)) : origin.Y;
+            var left = menuBeside && menuBeforeToolbar
+                ? origin.X - (int)Math.Round((desired.Width - inset - rowSize.Width) * scale)
+                : origin.X;
+            x = Math.Clamp(left, work.Left + margin, Math.Max(work.Left + margin, work.Right - physW - margin));
+            var top = !menuBeside && menuBeforeToolbar
+                ? origin.Y - (physH - (int)Math.Ceiling(rowHeight * scale))
+                : origin.Y;
             y = Math.Clamp(top, work.Top + margin, Math.Max(work.Top + margin, work.Bottom - physH - margin));
-            if (_extendedMenuOpen)
+            if (menuBeside)
+                ToolbarPanel.Margin = new Thickness(0, Math.Clamp((origin.Y - y) / scale, 0,
+                    Math.Max(0, desired.Height - rowHeight)), 0, 0);
+            else if (_extendedMenuOpen)
                 ToolbarPanel.Margin = new Thickness(Math.Clamp((origin.X - x) / scale, 0,
                     Math.Max(0, desired.Width - inset - rowSize.Width)), 0, 0, 0);
         }

@@ -6,11 +6,11 @@
 
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="38" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Padding="14,0,0,0">
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="38" Padding="14,0,0,0">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <ContentPresenter x:Name="BrandLogoHost" VerticalAlignment="Center" />
                 <TextBlock Text="Plyph Settings"
@@ -35,6 +35,7 @@
                         CompactModeThresholdWidth="680"
                         ExpandedModeThresholdWidth="880"
                         OpenPaneLength="220"
+                        HorizontalContentAlignment="Stretch"
                         IsBackButtonVisible="Collapsed"
                         IsSettingsVisible="False"
                         SelectionChanged="NavView_SelectionChanged"
@@ -92,7 +93,7 @@
                 </NavigationViewItem>
             </NavigationView.FooterMenuItems>
 
-            <Frame x:Name="ContentFrame" />
+            <Frame x:Name="ContentFrame" HorizontalContentAlignment="Stretch" />
         </NavigationView>
     </Grid>
 </Window>

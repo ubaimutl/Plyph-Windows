@@ -38,10 +38,9 @@ public sealed class TextReplacer : IDisposable
     public async Task<(bool Success, string? ErrorMessage)> ReplaceAsync(
         string output,
         bool delayed,
-        IntPtr focusedWindow)
+        IntPtr focusedWindow,
+        string? expectedSelection = null)
     {
-        SelectionCaptureService.SetClipboardTextSafe(output);
-
         if (delayed)
             await Task.Delay(200).ConfigureAwait(true);
 
@@ -56,6 +55,27 @@ public sealed class TextReplacer : IDisposable
             return (false, "Release the shortcut keys and try again.");
 
         await Task.Delay(25).ConfigureAwait(true);
+        if (delayed)
+        {
+            if (focusedWindow == IntPtr.Zero || NativeMethods.GetForegroundWindow() != focusedWindow)
+                return (false, "Return to the original window before replacing text.");
+
+            if (expectedSelection != null)
+            {
+                var status = UiAutomationInterop.TryQuerySelectedText(out var currentText, out _, includePointerElement: false);
+                if ((status == UiaSelectionStatus.Selected &&
+                     currentText.ReplaceLineEndings("\n") != expectedSelection.ReplaceLineEndings("\n")) ||
+                    (status == UiaSelectionStatus.EmptySupported && !NativeMethods.HasWin32EditSelection(focusedWindow)))
+                {
+                    return (false, "The original selection changed. Select the text again before replacing it.");
+                }
+            }
+
+            if (NativeMethods.GetForegroundWindow() != focusedWindow)
+                return (false, "Return to the original window before replacing text.");
+        }
+
+        SelectionCaptureService.SetClipboardTextSafe(output);
         NativeMethods.SendCtrlShortcut(NativeMethods.VK_V);
         RememberUndo(focusedWindow);
         return (true, null);

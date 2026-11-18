@@ -100,8 +100,8 @@
 
                     <ToggleButton x:Name="PinButton" Style="{StaticResource PopupIconToggleStyle}"
                                   Grid.Column="2"
-                                  AutomationProperties.Name="Pin popup on top"
-                                  ToolTipService.ToolTip="Pin on top while working in other apps"
+                                  AutomationProperties.Name="Pin popup"
+                                  ToolTipService.ToolTip="Keep this popup open when clicking outside"
                                   Width="26"
                                   Height="26"
                                   Padding="0"
@@ -135,7 +135,7 @@
                                  x:Name="AskPromptBox"
                                  AutomationProperties.AutomationId="AskPromptBox"
                                  AutomationProperties.Name="Ask prompt input"
-                                 PlaceholderText="Ask about your selection…"
+                                 PlaceholderText="Ask a question or request a change…"
                                  AcceptsReturn="True"
                                  TextWrapping="Wrap"
                                  MaxHeight="90"
@@ -156,6 +156,7 @@
                             <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE724;" FontSize="12" />
                         </Button>
                     </Grid>
+                    <CheckBox x:Name="IncludeSelectionBox" Content="Include selected text" MinHeight="24" />
                     <TextBlock Text="Enter to send · Shift+Enter for new line · Esc to cancel"
                                FontSize="11"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />

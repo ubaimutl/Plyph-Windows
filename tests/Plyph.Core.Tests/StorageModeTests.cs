@@ -78,16 +78,19 @@ public sealed class StorageModeTests
         {
             var s1 = new PlyphSettings(StorageMode.Portable, tempDir, persistToDisk: true);
             Assert.Equal("button", s1.GetString("floating-toolbar-layout"));
+            Assert.Equal("horizontal", s1.GetString("floating-toolbar-orientation"));
             Assert.Equal("selection", s1.GetString("floating-toolbar-position"));
             Assert.False(s1.GetBoolean("toolbar-accent-icon"));
             Assert.False(s1.GetBoolean("result-popup-dismiss-on-outside-click"));
 
             s1.SetString("floating-toolbar-position", "cursor");
+            s1.SetString("floating-toolbar-orientation", "vertical");
             s1.SetBoolean("toolbar-accent-icon", true);
             s1.SetBoolean("result-popup-dismiss-on-outside-click", true);
 
             var s2 = new PlyphSettings(StorageMode.Portable, tempDir, persistToDisk: true);
             Assert.Equal("cursor", s2.GetString("floating-toolbar-position"));
+            Assert.Equal("vertical", s2.GetString("floating-toolbar-orientation"));
             Assert.True(s2.GetBoolean("toolbar-accent-icon"));
             Assert.True(s2.GetBoolean("result-popup-dismiss-on-outside-click"));
         }

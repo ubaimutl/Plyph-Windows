@@ -6,11 +6,11 @@
 
     <Grid x:Name="RootGrid" KeyDown="RootGrid_KeyDown">
         <Grid.RowDefinitions>
-            <RowDefinition Height="38" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <Grid x:Name="AppTitleBar" Grid.Row="0" Padding="14,0,0,0">
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Height="38" Padding="14,0,0,0">
             <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                 <ContentPresenter x:Name="BrandLogoHost" VerticalAlignment="Center" />
                 <TextBlock x:Name="TitleBarTitleText"

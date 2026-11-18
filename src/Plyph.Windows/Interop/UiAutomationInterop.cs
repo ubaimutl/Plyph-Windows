@@ -34,6 +34,23 @@ public static class UiAutomationInterop
         void ElementFromHandle(IntPtr hwnd, [MarshalAs(UnmanagedType.Interface)] out IUIAutomationElement element);
         void ElementFromPoint(NativeMethods.POINT pt, [MarshalAs(UnmanagedType.Interface)] out IUIAutomationElement element);
         void GetFocusedElement([MarshalAs(UnmanagedType.Interface)] out IUIAutomationElement element);
+        void GetRootElementBuildCache(IntPtr request, out IntPtr element);
+        void ElementFromHandleBuildCache(IntPtr hwnd, IntPtr request, out IntPtr element);
+        void ElementFromPointBuildCache(NativeMethods.POINT point, IntPtr request, out IntPtr element);
+        void GetFocusedElementBuildCache(IntPtr request, out IntPtr element);
+        void CreateTreeWalker(IntPtr condition, out IntPtr walker);
+        void get_ControlViewWalker(out IntPtr walker);
+        void get_ContentViewWalker(out IntPtr walker);
+        void get_RawViewWalker([MarshalAs(UnmanagedType.Interface)] out IUIAutomationTreeWalker walker);
+    }
+
+    [ComImport]
+    [Guid("4042C624-389C-4AFC-A630-9DF854A541FC")]
+    [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+    private interface IUIAutomationTreeWalker
+    {
+        void GetParentElement([MarshalAs(UnmanagedType.Interface)] IUIAutomationElement element,
+            [MarshalAs(UnmanagedType.Interface)] out IUIAutomationElement? parent);
     }
 
     [ComImport]
@@ -103,7 +120,8 @@ public static class UiAutomationInterop
     public static bool TryGetSelectedText(out string selectedText, out Rectangle? selectionBounds) =>
         TryQuerySelectedText(out selectedText, out selectionBounds) == UiaSelectionStatus.Selected;
 
-    public static UiaSelectionStatus TryQuerySelectedText(out string selectedText, out Rectangle? selectionBounds)
+    public static UiaSelectionStatus TryQuerySelectedText(
+        out string selectedText, out Rectangle? selectionBounds, bool includePointerElement = true)
     {
         selectedText = "";
         selectionBounds = null;
@@ -130,7 +148,7 @@ public static class UiAutomationInterop
                 {
                     try
                     {
-                        var st = TryExtractFromElement(focused, out selectedText, out selectionBounds);
+                        var st = TryExtractFromControl(automation, focused, out selectedText, out selectionBounds);
                         if (st == UiaSelectionStatus.Selected)
                             return UiaSelectionStatus.Selected;
                         if (st == UiaSelectionStatus.EmptySupported)
@@ -142,14 +160,14 @@ public static class UiAutomationInterop
                     }
                 }
 
-                if (NativeMethods.GetCursorPos(out var pt))
+                if (includePointerElement && NativeMethods.GetCursorPos(out var pt))
                 {
                     automation.ElementFromPoint(pt, out var underCursor);
                     if (underCursor != null)
                     {
                         try
                         {
-                            var st = TryExtractFromElement(underCursor, out selectedText, out selectionBounds);
+                            var st = TryExtractFromControl(automation, underCursor, out selectedText, out selectionBounds);
                             if (st == UiaSelectionStatus.Selected)
                                 return UiaSelectionStatus.Selected;
                             if (st == UiaSelectionStatus.EmptySupported)
@@ -173,6 +191,55 @@ public static class UiAutomationInterop
         }
 
         return sawEmptySupported ? UiaSelectionStatus.EmptySupported : UiaSelectionStatus.Unsupported;
+    }
+
+    private static UiaSelectionStatus TryExtractFromControl(
+        IUIAutomation automation, IUIAutomationElement element,
+        out string selectedText, out Rectangle? selectionBounds)
+    {
+        var status = TryExtractFromElement(element, out selectedText, out selectionBounds);
+        if (status == UiaSelectionStatus.Selected)
+            return status;
+
+        // Browser editors can expose TextPattern on an enclosing document instead of the focused leaf.
+        IUIAutomationTreeWalker? walker = null;
+        IUIAutomationElement? parent = null;
+        try
+        {
+            automation.get_RawViewWalker(out walker);
+            if (walker == null)
+                return status;
+
+            var current = element;
+            for (var depth = 0; depth < 6; depth++)
+            {
+                walker.GetParentElement(current, out var next);
+                if (parent != null)
+                    Marshal.ReleaseComObject(parent);
+                parent = next;
+                if (parent == null)
+                    break;
+
+                var parentStatus = TryExtractFromElement(parent, out selectedText, out selectionBounds);
+                if (parentStatus == UiaSelectionStatus.Selected)
+                    return parentStatus;
+                if (parentStatus == UiaSelectionStatus.EmptySupported)
+                    status = parentStatus;
+                current = parent;
+            }
+        }
+        catch (COMException)
+        {
+        }
+        finally
+        {
+            if (parent != null)
+                Marshal.ReleaseComObject(parent);
+            if (walker != null)
+                Marshal.ReleaseComObject(walker);
+        }
+
+        return status;
     }
 
     private static UiaSelectionStatus TryExtractFromElement(
@@ -282,6 +349,10 @@ public static class UiAutomationInterop
             {
                 Marshal.FinalReleaseComObject(ranges);
             }
+        }
+        catch (COMException)
+        {
+            return UiaSelectionStatus.Unsupported;
         }
         finally
         {

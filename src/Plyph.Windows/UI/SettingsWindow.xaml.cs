@@ -42,8 +42,7 @@ public sealed partial class SettingsWindow : Window
         ModeBadgeText.Text = settings.Mode == StorageMode.Portable ? "Portable Mode" : "Installed";
         BrandLogoHost.Content = FloatingSurfaceHelper.CreatePlyphMark(14);
 
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBar);
+        ThemeHelper.ConfigureTitleBar(this, AppTitleBar);
 
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Plyph.ico");
         ThemeHelper.ConfigureWindow(this, settings, 960, 680, iconPath);

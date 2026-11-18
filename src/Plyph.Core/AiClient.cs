@@ -328,10 +328,19 @@ public sealed class AiClient : IDisposable
         Cancel();
 
         var settings = _settings ?? throw new InvalidOperationException("Client is disposed.");
-        var inputMode = mode == "prompt" || options.InputMode == "prompt" ? "prompt" : "transform";
+        var isAsk = mode == "ask";
+        var inputMode = isAsk || mode == "prompt" || options.InputMode == "prompt" ? "prompt" : "transform";
+        if (isAsk && string.IsNullOrWhiteSpace(customPrompt))
+            throw new ArgumentException("Enter a question or request.", nameof(customPrompt));
+
+        var userText = isAsk
+            ? string.IsNullOrWhiteSpace(text)
+                ? customPrompt!
+                : $"Request:\n{customPrompt}\n\nSelected text (context):\n{JsonSerializer.Serialize(text)}"
+            : text;
         var hasActionLimits = mode is "custom" or "prompt";
         var inputLimit = hasActionLimits ? TokenLimit(options.InputLimit) : 0;
-        var estimatedTokens = EstimateTokens(text);
+        var estimatedTokens = EstimateTokens(userText);
 
         if (inputLimit > 0 && estimatedTokens > inputLimit)
         {
@@ -354,8 +363,10 @@ public sealed class AiClient : IDisposable
         var promptKey = mode == "rewrite"
             ? "prompt-rewrite"
             : mode == "prompt" ? "prompt-run" : "prompt-correct";
-        var storedPrompt = settings.GetString(promptKey);
-        var prompt = ExpandPrompt(settings, customPrompt ?? storedPrompt, text);
+        var prompt = isAsk
+            ? "Answer the user's question or carry out their request. Use any supplied selection as context. " +
+              "Rewrite or transform the selected text only when the user asks for an edit."
+            : ExpandPrompt(settings, customPrompt ?? settings.GetString(promptKey), text);
 
         var usePersonalPreferences = options.UsePersonalPreferences ?? (mode == "custom"
             ? true
@@ -379,7 +390,7 @@ public sealed class AiClient : IDisposable
             ? "managed by ChatGPT"
             : provider == "gemini" && explicitOutputLimit == 0
                 ? "model default"
-                : MaxTokens(text, outputLimit).ToString();
+                : MaxTokens(userText, outputLimit).ToString();
 
         DebugLog(
             $"AI request: provider={provider}, model={model}, action={mode}, " +
@@ -399,14 +410,14 @@ public sealed class AiClient : IDisposable
             cts.Token.ThrowIfCancellationRequested();
 
             if (info.Url != null)
-                return await CompatibleAsync(settings, info, text, prompt, model, inputMode, outputLimit, cts).ConfigureAwait(false);
+                return await CompatibleAsync(settings, info, userText, prompt, model, inputMode, outputLimit, cts).ConfigureAwait(false);
 
             if (provider == "chatgpt")
             {
                 if (hasActionLimits && TokenLimit(options.OutputLimit) > 0)
                     throw new InvalidOperationException("ChatGPT does not support output token limits. Set this action’s output limit to Auto.");
 
-                var userPayload = inputMode == "prompt" ? text : Payload(text);
+                var userPayload = inputMode == "prompt" ? userText : Payload(userText);
                 string result;
                 if (ChatGptTransformOverride != null)
                 {
@@ -421,11 +432,11 @@ public sealed class AiClient : IDisposable
             }
 
             if (provider == "ollama")
-                return await OllamaAsync(settings, text, prompt, model, inputMode, outputLimit, cts.Token).ConfigureAwait(false);
+                return await OllamaAsync(settings, userText, prompt, model, inputMode, outputLimit, cts.Token).ConfigureAwait(false);
             if (provider == "cloudflare")
-                return await CloudflareAsync(settings, text, prompt, model, inputMode, outputLimit, cts.Token).ConfigureAwait(false);
+                return await CloudflareAsync(settings, userText, prompt, model, inputMode, outputLimit, cts.Token).ConfigureAwait(false);
             if (provider == "gemini")
-                return await GeminiAsync(settings, text, prompt, model, inputMode, explicitOutputLimit, cts.Token).ConfigureAwait(false);
+                return await GeminiAsync(settings, userText, prompt, model, inputMode, explicitOutputLimit, cts.Token).ConfigureAwait(false);
 
             throw new InvalidOperationException("Unsupported provider connection.");
         }

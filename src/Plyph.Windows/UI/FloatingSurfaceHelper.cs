@@ -272,7 +272,8 @@ public static class FloatingSurfaceHelper
         int physW,
         int physH,
         int gapPx = 6,
-        int marginPx = 8)
+        int marginPx = 8,
+        bool alignToTop = false)
     {
         var center = new WinPoint(
             selectionRect.Left + selectionRect.Width / 2,
@@ -284,9 +285,15 @@ public static class FloatingSurfaceHelper
             selectionRect.Right + gapPx + physW <= work.Right - marginPx)
         {
             var sideX = Math.Clamp(selectionRect.Right + gapPx, work.Left + marginPx, Math.Max(work.Left + marginPx, work.Right - physW - marginPx));
-            var sideY = selectionRect.Top + (selectionRect.Height - physH) / 2;
+            var sideY = alignToTop ? selectionRect.Top : selectionRect.Top + (selectionRect.Height - physH) / 2;
             sideY = Math.Clamp(sideY, work.Top + marginPx, Math.Max(work.Top + marginPx, work.Bottom - physH - marginPx));
             return (sideX, sideY);
+        }
+
+        if (alignToTop && selectionRect.Left - gapPx - physW >= work.Left + marginPx)
+        {
+            return (selectionRect.Left - gapPx - physW, Math.Clamp(selectionRect.Top,
+                work.Top + marginPx, Math.Max(work.Top + marginPx, work.Bottom - physH - marginPx)));
         }
 
         // Otherwise place cleanly just below the selection (or flip cleanly above without covering the text)

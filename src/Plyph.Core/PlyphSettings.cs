@@ -143,6 +143,7 @@ public sealed class PlyphSettings : IPlyphSettings
         ["explicit-copy-apps"] = "",
         ["show-floating-button"] = true,
         ["floating-toolbar-layout"] = "button",
+        ["floating-toolbar-orientation"] = "horizontal",
         ["floating-toolbar-position"] = "selection",
         ["floating-toolbar-scale"] = 1.0,
         ["toolbar-accent-icon"] = false,

@@ -214,15 +214,29 @@ public sealed partial class ActionsPage : Page
         if (iconCombo.SelectedIndex < 0)
             iconCombo.SelectedIndex = 0;
 
-        formStack.Children.Add(nameBox);
-        formStack.Children.Add(iconCombo);
-        formStack.Children.Add(promptBox);
-        formStack.Children.Add(enabledToggle);
-
         var modeCombo = new ComboBox { Header = "Input mode", HorizontalAlignment = HorizontalAlignment.Stretch };
         modeCombo.Items.Add("Transform text");
         modeCombo.Items.Add("Run as prompt");
         modeCombo.SelectedIndex = existing?.InputMode == "prompt" ? 1 : 0;
+        var modeHint = new TextBlock
+        {
+            TextWrapping = TextWrapping.Wrap,
+            Style = Application.Current.Resources["CaptionTextBlockStyle"] as Style
+        };
+        void UpdateModeHint() => modeHint.Text = modeCombo.SelectedIndex == 1
+            ? "Send the selected text as the request. Instructions are optional guidance."
+            : "Apply your instructions to the selected text and return the edited result.";
+        modeCombo.SelectionChanged += (_, _) => UpdateModeHint();
+        UpdateModeHint();
+
+        var modeFields = new StackPanel { Spacing = 4 };
+        modeFields.Children.Add(modeCombo);
+        modeFields.Children.Add(modeHint);
+        formStack.Children.Add(nameBox);
+        formStack.Children.Add(iconCombo);
+        formStack.Children.Add(modeFields);
+        formStack.Children.Add(promptBox);
+        formStack.Children.Add(enabledToggle);
 
         var personalToggle = new ToggleSwitch { Header = "Use personal context", IsOn = existing?.UsePersonalPreferences ?? (template == null) };
 
@@ -261,7 +275,6 @@ public sealed partial class ActionsPage : Page
         };
 
         var advStack = new StackPanel { Spacing = 8 };
-        advStack.Children.Add(modeCombo);
         advStack.Children.Add(personalToggle);
         advStack.Children.Add(provCombo);
         advStack.Children.Add(modelBox);

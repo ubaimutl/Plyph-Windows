@@ -24,7 +24,7 @@ public sealed class WindowsSelectionMonitor : IDisposable
     };
 
     private readonly IPlyphSettings _settings;
-    private readonly Func<bool> _isBusyOrModalOpen;
+    private readonly Func<bool> _isRequestRunning;
     private readonly Func<Point, bool> _isPointInsideFloatingToolbar;
 
     private IntPtr _selectionHook;
@@ -51,10 +51,12 @@ public sealed class WindowsSelectionMonitor : IDisposable
     private readonly SemaphoreSlim _uiaQueries = new(1);
     private int _selectionReadSerial;
     private int? _gestureReadSerial;
+    private (IntPtr Window, bool AllowFallback, bool BrowserTextGesture, Point? EndPoint, DateTime Expires)? _pendingGesture;
     private bool _disposed;
     private string? _lastSelectionText;
     private IntPtr _floatingSourceWindow;
     private NativeMethods.RECT _floatingSourceRect;
+    private Rectangle? _floatingSelectionBounds;
 
     private IntPtr _lastRealAppWindow;
     private string _recentValidText = "";
@@ -75,11 +77,11 @@ public sealed class WindowsSelectionMonitor : IDisposable
 
     public WindowsSelectionMonitor(
         IPlyphSettings settings,
-        Func<bool> isBusyOrModalOpen,
+        Func<bool> isRequestRunning,
         Func<Point, bool> isPointInsideFloatingToolbar)
     {
         _settings = settings;
-        _isBusyOrModalOpen = isBusyOrModalOpen;
+        _isRequestRunning = isRequestRunning;
         _isPointInsideFloatingToolbar = isPointInsideFloatingToolbar;
 
         _winEventProc = OnWinEvent;
@@ -212,7 +214,11 @@ public sealed class WindowsSelectionMonitor : IDisposable
 
         var escDown = NativeMethods.IsKeyDown(NativeMethods.VK_ESCAPE);
         if (escDown && !_wasEscapeDown)
+        {
+            _pendingGesture = null;
+            _selectionReadSerial++;
             DismissRequested?.Invoke(this, true);
+        }
         _wasEscapeDown = escDown;
 
         if (_floatingSourceWindow != IntPtr.Zero)
@@ -239,7 +245,11 @@ public sealed class WindowsSelectionMonitor : IDisposable
         var newlyPressed = (buttonsDown & ~_mouseButtonsDown) != 0;
         _mouseButtonsDown = buttonsDown;
         if (newlyPressed)
+        {
+            _pendingGesture = null;
+            _selectionReadSerial++;
             MousePressed?.Invoke(this, cursor);
+        }
 
         bool MovedFromMouseDown() =>
             Math.Abs(cursor.X - _mouseDownPoint.X) >= Math.Max(4, NativeMethods.GetSystemMetrics(NativeMethods.SM_CXDRAG)) ||
@@ -310,7 +320,10 @@ public sealed class WindowsSelectionMonitor : IDisposable
                         _suppressWinEventUntil = DateTime.UtcNow.AddMilliseconds(350);
                         _ = HandleSelectionChangeAsync(
                             isGesture: true,
-                            allowNonUiaMouseFallback: gestureWasNonArrowOrIBeam);
+                            allowNonUiaMouseFallback: gestureWasNonArrowOrIBeam,
+                            browserTextGesture: _sawIBeamDuringGesture &&
+                                NativeMethods.GetWindowClassName(fg) is "Chrome_WidgetWin_1" or "MozillaWindowClass",
+                            gestureEndPoint: cursor);
                     }
                 }
             }
@@ -344,6 +357,16 @@ public sealed class WindowsSelectionMonitor : IDisposable
             _wasShiftSelecting = false;
             _ = HandleSelectionChangeAsync(isGesture: true, allowNonUiaMouseFallback: true);
         }
+
+        if (_pendingGesture is { } pending)
+        {
+            if (DateTime.UtcNow > pending.Expires || NativeMethods.GetForegroundWindow() != pending.Window)
+                _pendingGesture = null;
+            else if (!_isRequestRunning())
+                _ = HandleSelectionChangeAsync(
+                    isGesture: true, allowNonUiaMouseFallback: pending.AllowFallback,
+                    browserTextGesture: pending.BrowserTextGesture, gestureEndPoint: pending.EndPoint);
+        }
     }
 
     private bool IsPointInToolbar()
@@ -357,8 +380,6 @@ public sealed class WindowsSelectionMonitor : IDisposable
     {
         if (hwnd == IntPtr.Zero)
             return false;
-        if (_isBusyOrModalOpen())
-            return true;
         if (IsShellOrOwnWindow(hwnd))
             return true;
 
@@ -381,9 +402,21 @@ public sealed class WindowsSelectionMonitor : IDisposable
         return exclusions.Any(rule => AppExclusions.Matches(rule, processName, className));
     }
 
-    private async Task HandleSelectionChangeAsync(bool isGesture, bool allowNonUiaMouseFallback)
+    private async Task HandleSelectionChangeAsync(
+        bool isGesture, bool allowNonUiaMouseFallback, bool browserTextGesture = false, Point? gestureEndPoint = null)
     {
         if (_disposed) return;
+        if (isGesture)
+        {
+            _pendingGesture = null;
+            var source = NativeMethods.GetForegroundWindow();
+            if (_isRequestRunning() && !IsShellOrOwnWindow(source))
+            {
+                _pendingGesture = (source, allowNonUiaMouseFallback, browserTextGesture, gestureEndPoint, DateTime.UtcNow.AddSeconds(3));
+                return;
+            }
+        }
+
         var serial = ++_selectionReadSerial;
         if (isGesture)
         {
@@ -394,7 +427,7 @@ public sealed class WindowsSelectionMonitor : IDisposable
 
         try
         {
-            await ReadSelectionAsync(serial, allowNonUiaMouseFallback);
+            await ReadSelectionAsync(serial, allowNonUiaMouseFallback, browserTextGesture, gestureEndPoint);
         }
         finally
         {
@@ -403,7 +436,7 @@ public sealed class WindowsSelectionMonitor : IDisposable
         }
     }
 
-    private async Task ReadSelectionAsync(int serial, bool allowNonUiaMouseFallback)
+    private async Task ReadSelectionAsync(int serial, bool allowNonUiaMouseFallback, bool browserTextGesture, Point? gestureEndPoint)
     {
         if (!_settings.GetBoolean("show-floating-button"))
         {
@@ -411,7 +444,7 @@ public sealed class WindowsSelectionMonitor : IDisposable
             return;
         }
 
-        if (_isBusyOrModalOpen())
+        if (_isRequestRunning())
             return;
 
         var window = NativeMethods.GetForegroundWindow();
@@ -423,11 +456,14 @@ public sealed class WindowsSelectionMonitor : IDisposable
 
         RememberForegroundIfRealApp(window);
 
+        var fallbackPoint = gestureEndPoint ??
+            (NativeMethods.GetCursorPos(out var cursor) ? new Point(cursor.X, cursor.Y) : new Point(200, 200));
+
         bool IsCurrent() =>
             !_disposed && serial == _selectionReadSerial &&
             _settings.GetBoolean("show-floating-button") &&
             NativeMethods.GetForegroundWindow() == window &&
-            !_isBusyOrModalOpen();
+            !_isRequestRunning();
 
         await Task.Delay(90).ConfigureAwait(true);
         if (!IsCurrent())
@@ -453,11 +489,19 @@ public sealed class WindowsSelectionMonitor : IDisposable
                 if (!IsCurrent())
                     return;
 
-                (uiaStatus, text, bounds) = await Task.Run(() =>
+                static (UiaSelectionStatus Status, string Text, Rectangle? Bounds) QuerySelection()
                 {
                     var status = UiAutomationInterop.TryQuerySelectedText(out var selectedText, out var selectionBounds);
                     return (status, selectedText, selectionBounds);
-                });
+                }
+
+                (uiaStatus, text, bounds) = await Task.Run(QuerySelection);
+                if (browserTextGesture && uiaStatus != UiaSelectionStatus.Selected)
+                {
+                    await Task.Delay(120);
+                    if (IsCurrent())
+                        (uiaStatus, text, bounds) = await Task.Run(QuerySelection);
+                }
             }
             finally
             {
@@ -468,9 +512,24 @@ public sealed class WindowsSelectionMonitor : IDisposable
                 return;
         }
 
-        var hasSelection = uiaStatus == UiaSelectionStatus.Selected;
+        var besideSelection = _settings.GetString("floating-toolbar-position") != "cursor";
+        if (besideSelection)
+        {
+            if (bounds is { } rect && (rect.Width <= 0 || rect.Height <= 0 ||
+                !NativeMethods.IsPointInClientArea(window, new Point(rect.Left + rect.Width / 2, rect.Top + rect.Height / 2))))
+            {
+                bounds = null;
+            }
 
-        // Only consider non-UIA fallbacks when UIA did NOT confirm an empty selection.
+            bounds ??= NativeMethods.GetWin32EditSelectionBounds(window);
+        }
+
+        var hasSelection = uiaStatus == UiaSelectionStatus.Selected || (besideSelection && bounds.HasValue);
+
+        // An I-beam drag or double-click in a browser can precede its UIA selection update.
+        if (!hasSelection && browserTextGesture && _settings.GetBoolean("selection-mouse-fallback"))
+            hasSelection = true;
+
         if (!hasSelection && uiaStatus != UiaSelectionStatus.EmptySupported)
         {
             if (NativeMethods.HasWin32EditSelection(window))
@@ -514,33 +573,19 @@ public sealed class WindowsSelectionMonitor : IDisposable
             _dismissedSelectionUntil = DateTime.MinValue;
         }
 
-        _lastSelectionText = text;
-
-        if (_isBusyOrModalOpen())
+        if (!IsCurrent())
             return;
 
-        var prefPos = (_settings.GetString("floating-toolbar-position") ?? "selection").Trim().ToLowerInvariant();
-        var useSelectionBounds =
-            prefPos != "cursor" &&
-            bounds.HasValue &&
-            bounds.Value.Width > 0 &&
-            bounds.Value.Height > 0;
+        var anchorBounds = besideSelection ? bounds : null;
+        if (gestureEndPoint == null && _floatingSourceWindow == window && _lastSelectionText == text &&
+            (anchorBounds == null || anchorBounds == _floatingSelectionBounds))
+            return;
 
-        Rectangle? anchorBounds = useSelectionBounds ? bounds : null;
-        Point anchor;
-        if (useSelectionBounds)
-        {
-            anchor = new Point(bounds!.Value.Right + 6, bounds.Value.Bottom + 6);
-        }
-        else if (NativeMethods.GetCursorPos(out var pt))
-        {
-            anchor = new Point(pt.X + 10, pt.Y + 10);
-        }
-        else
-        {
-            anchor = new Point(200, 200);
-        }
-
+        _lastSelectionText = text;
+        _floatingSelectionBounds = anchorBounds;
+        var anchor = anchorBounds is { } selection
+            ? new Point(selection.Right + 6, selection.Bottom + 6)
+            : fallbackPoint;
         WatchSourceWindow(window);
         SelectionDetected?.Invoke(this, new SelectionDetectedEventArgs(text, window, anchor, anchorBounds));
     }
@@ -569,6 +614,7 @@ public sealed class WindowsSelectionMonitor : IDisposable
         _selectionReadSerial++;
         _lastSelectionText = null;
         _floatingSourceWindow = IntPtr.Zero;
+        _floatingSelectionBounds = null;
     }
 
     public void Dispose()

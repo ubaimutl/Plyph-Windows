@@ -32,8 +32,8 @@ public sealed partial class ResultWindow : Window
 
         InitializeComponent();
 
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBar);
+        Title = $"Plyph — {_session.ActionTitle}";
+        ThemeHelper.ConfigureTitleBar(this, AppTitleBar);
 
         BrandLogoHost.Content = FloatingSurfaceHelper.CreatePlyphMark(14);
         TitleBarTitleText.Text = _session.ActionTitle;

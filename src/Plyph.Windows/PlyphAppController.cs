@@ -68,7 +68,7 @@ public sealed class PlyphAppController : IDisposable
         _hotkeyManager = new GlobalHotkeyManager(settings);
         _selectionMonitor = new WindowsSelectionMonitor(
             settings,
-            isBusyOrModalOpen: () => _runningRequest || _compactResultWindow != null || _resultWindow != null,
+            isRequestRunning: () => _runningRequest,
             isPointInsideFloatingToolbar: pt =>
                 _floatingToolbar.IsScreenPointInside(pt) ||
                 (_actionPalette != null && _actionPalette.IsShown && _actionPalette.IsScreenPointInside(pt)));
@@ -79,7 +79,8 @@ public sealed class PlyphAppController : IDisposable
         {
             if (_actionPalette != null && _actionPalette.IsShown)
                 _actionPalette.Dismiss();
-            _floatingToolbar.Hide(suppress);
+            if (_floatingToolbar.IsShown)
+                _floatingToolbar.Hide(suppress);
         };
 
         _trayIcon = new TrayIconManager(
@@ -231,30 +232,53 @@ public sealed class PlyphAppController : IDisposable
         if (!fromFloatingToolbar)
             _floatingToolbar.Hide(suppressSelection: false);
 
+        CloseModalResultWindows();
+
         if (action.Mode == "ask")
         {
-            ShowInlineAskPopup(action, sourceWindow, cachedText, effectiveAnchor);
+            await ShowInlineAskPopupAsync(action, sourceWindow, cachedText, fromFloatingToolbar, effectiveAnchor);
             return;
         }
 
-        await RunAiWorkflowAsync(action, null, sourceWindow, cachedText, fromFloatingToolbar, effectiveAnchor, inlinePopupMode: false);
+        await RunAiWorkflowAsync(action, sourceWindow, cachedText, fromFloatingToolbar, effectiveAnchor);
     }
 
-    private void ShowInlineAskPopup(PlyphAction action, IntPtr sourceWindow, string? cachedText, Point anchorPoint)
+    private async Task ShowInlineAskPopupAsync(
+        PlyphAction action, IntPtr sourceWindow, string? cachedText, bool fromFloatingToolbar, Point anchorPoint)
     {
         _floatingToolbar.Hide(suppressSelection: false);
-        CloseModalResultWindows();
+
+        CapturedSelection selection;
+        _runningRequest = true;
+        try
+        {
+            selection = await _captureService.ReadAskSelectionAsync(
+                sourceWindow, fromFloatingToolbar ? cachedText : null, fromFloatingToolbar);
+        }
+        catch (Exception ex)
+        {
+            ReportError(ex.Message, anchorPoint);
+            return;
+        }
+        finally
+        {
+            _runningRequest = false;
+        }
 
         var badge = ProvidersStore.FormatProviderBadge(_settings);
         var win = CompactResultWindow.CreateForAsk(
             _settings,
             anchorPoint,
             badge,
-            onSubmit: async instruction =>
+            hasSelection: !string.IsNullOrWhiteSpace(selection.Text),
+            onSubmit: async (instruction, includeSelection) =>
             {
                 try
                 {
-                    var session = await BuildResultSessionAsync(action, instruction, sourceWindow, cachedText, fromFloatingToolbar: false, anchorPoint);
+                    var context = includeSelection
+                        ? selection
+                        : new CapturedSelection("", null, IsConfirmedSelection: false);
+                    var session = await BuildResultSessionAsync(action, instruction, sourceWindow, null, anchorPoint, context);
                     SetTrayStatus("default", session != null ? "Plyph — Previewing result" : "Plyph — Ready");
                     return session;
                 }
@@ -290,18 +314,16 @@ public sealed class PlyphAppController : IDisposable
 
     private async Task RunAiWorkflowAsync(
         PlyphAction action,
-        string? askInstruction,
         IntPtr sourceWindow,
         string? cachedText,
         bool fromFloatingToolbar,
-        Point anchorPoint,
-        bool inlinePopupMode)
+        Point anchorPoint)
     {
         try
         {
-            SetWorkingStatus(action.Mode == "ask" ? "Asking AI…" : "Processing selection…", fromFloatingToolbar);
+            SetWorkingStatus("Processing selection…", fromFloatingToolbar);
             var session = await BuildResultSessionAsync(
-                action, askInstruction, sourceWindow, cachedText, fromFloatingToolbar, anchorPoint);
+                action, null, sourceWindow, cachedText, anchorPoint);
 
             if (session == null)
             {
@@ -312,7 +334,7 @@ public sealed class PlyphAppController : IDisposable
                 return;
             }
 
-            var forcePreview = action.Mode == "ask" || action.InputMode == "prompt" || _settings.GetBoolean("preview-results");
+            var forcePreview = action.InputMode == "prompt" || _settings.GetBoolean("preview-results");
             if (!forcePreview)
             {
                 await PerformReplaceAsync(session.CurrentText, sourceWindow, delayed: false, fromFloatingToolbar);
@@ -344,8 +366,8 @@ public sealed class PlyphAppController : IDisposable
         string? askInstruction,
         IntPtr sourceWindow,
         string? cachedText,
-        bool fromFloatingToolbar,
-        Point anchorPoint)
+        Point anchorPoint,
+        CapturedSelection? askSelection = null)
     {
         _runningRequest = true;
         _activeRequestCts?.Cancel();
@@ -355,9 +377,9 @@ public sealed class PlyphAppController : IDisposable
 
         try
         {
-            var captured = await _captureService.ReadSelectionAsync(sourceWindow, cachedText);
+            var captured = askSelection ?? await _captureService.ReadSelectionAsync(sourceWindow, cachedText);
             ct.ThrowIfCancellationRequested();
-            if (string.IsNullOrWhiteSpace(captured.Text))
+            if (askSelection == null && string.IsNullOrWhiteSpace(captured.Text))
                 throw new InvalidOperationException("Select text in the active window first (or enable clipboard fallback in Settings).");
 
             SetTrayStatus("working", $"Plyph — {(action.Mode == "ask" ? "Asking AI…" : "Processing selection…")}");
@@ -392,7 +414,7 @@ public sealed class PlyphAppController : IDisposable
                         UsePersonalPreferences = followUpPersonal
                     };
                     var promptText = $"Refine the provided text according to this instruction.\n\nInstruction: {instruction}";
-                    return await _aiClient.TransformAsync(currentResult, "ask", promptText, refineOpts);
+                    return await _aiClient.TransformAsync(currentResult, "refine", promptText, refineOpts);
                 },
                 DiscussAsync = async history =>
                 {
@@ -429,10 +451,13 @@ public sealed class PlyphAppController : IDisposable
             var sourceValid = sourceWindow != IntPtr.Zero && NativeMethods.IsWindow(sourceWindow);
             var canReplace = sourceValid && captured.IsConfirmedSelection;
             string? replaceWarning = null;
-            if (!sourceValid)
-                replaceWarning = "Original target window is no longer available — Copy is ready.";
-            else if (!captured.IsConfirmedSelection)
-                replaceWarning = "Original selection could not be confirmed (clipboard fallback) — Copy is ready.";
+            if (askSelection == null || !string.IsNullOrWhiteSpace(captured.Text))
+            {
+                if (!sourceValid)
+                    replaceWarning = "Original target window is no longer available — Copy is ready.";
+                else if (!captured.IsConfirmedSelection)
+                    replaceWarning = "Original selection could not be confirmed (clipboard fallback) — Copy is ready.";
+            }
 
             return new ResultSession(result, refinement)
             {
@@ -445,7 +470,8 @@ public sealed class PlyphAppController : IDisposable
                 CanReplace = canReplace,
                 ReplaceDisabledReason = replaceWarning,
                 AnchorPoint = anchorPoint,
-                OnReplace = finalText => _ = PerformReplaceAsync(finalText, sourceWindow, delayed: true, fromFloatingToolbar: false),
+                OnReplace = finalText => _ = PerformReplaceAsync(
+                    finalText, sourceWindow, delayed: true, fromFloatingToolbar: false, expectedSelection: captured.Text),
                 OnCopy = finalText =>
                 {
                     SelectionCaptureService.SetClipboardTextSafe(finalText);
@@ -567,9 +593,10 @@ public sealed class PlyphAppController : IDisposable
         ThemeHelper.BringWindowToFront(win, keepOnTop: session.Pinned);
     }
 
-    private async Task PerformReplaceAsync(string output, IntPtr targetWindow, bool delayed, bool fromFloatingToolbar)
+    private async Task PerformReplaceAsync(
+        string output, IntPtr targetWindow, bool delayed, bool fromFloatingToolbar, string? expectedSelection = null)
     {
-        var (ok, err) = await _textReplacer.ReplaceAsync(output, delayed, targetWindow);
+        var (ok, err) = await _textReplacer.ReplaceAsync(output, delayed, targetWindow, expectedSelection);
         if (ok)
         {
             _selectionMonitor.ClearDismissedSelection();
@@ -577,6 +604,11 @@ public sealed class PlyphAppController : IDisposable
         }
         else if (!string.IsNullOrEmpty(err))
         {
+            if (delayed)
+            {
+                SelectionCaptureService.SetClipboardTextSafe(output);
+                err += " The result was copied to the clipboard.";
+            }
             ReportError(err);
         }
     }
