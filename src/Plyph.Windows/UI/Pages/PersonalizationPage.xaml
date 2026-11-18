@@ -1,0 +1,43 @@
+<Page
+    x:Class="Plyph.Windows.UI.Pages.PersonalizationPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="8" Padding="28,16,28,32" MaxWidth="920">
+            <TextBlock Text="Personalization" Style="{StaticResource TitleTextBlockStyle}" />
+
+            <TextBox x:Name="PersonalContextBox"
+                     Header="Shared context"
+                     AutomationProperties.AutomationId="ActionsPersonalContextBox"
+                     PlaceholderText="Write concise British English. Keep emails friendly."
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="100"
+                     MaxHeight="200"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     TextChanged="Preference_TextChanged"
+                     Tag="personal-preferences" />
+            <TextBlock Text="Actions that enable personal context send this text to the active AI provider."
+                       Style="{StaticResource PlyphCardDescriptionStyle}" />
+
+            <TextBlock Text="Prompt variables" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,16,0,0" />
+            <TextBlock Text="Plyph fills these placeholders when they appear in an action’s instructions."
+                       Style="{StaticResource PlyphCardDescriptionStyle}" Margin="0,0,0,4" />
+
+            <controls:SettingsCard Header="Language" Description="${language}">
+                <TextBox x:Name="LanguageBox" Width="180" AutomationProperties.Name="Default language"
+                         Tag="variable-language" TextChanged="Preference_TextChanged" />
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="Tone" Description="${tone}">
+                <TextBox x:Name="ToneBox" Width="180" AutomationProperties.Name="Default tone"
+                         Tag="variable-tone" TextChanged="Preference_TextChanged" />
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="Style" Description="${style}">
+                <TextBox x:Name="StyleBox" Width="180" AutomationProperties.Name="Default style"
+                         Tag="variable-style" TextChanged="Preference_TextChanged" />
+            </controls:SettingsCard>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

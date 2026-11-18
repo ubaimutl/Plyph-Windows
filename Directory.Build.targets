@@ -1,0 +1,37 @@
+<Project>
+  <Import Project="$(WindowsCrossTargets)" Condition="'$(WindowsCrossTargets)' != ''" />
+
+  <PropertyGroup Condition="'$(WindowsCrossTargets)' != '' and '$(WindowsSDKBuildToolsBinVersionedFolder)' != ''">
+    <ManifestTool>$(_WindowsCrossShimDir)mt.sh</ManifestTool>
+  </PropertyGroup>
+
+  <!-- Fix case-sensitive MSIX glob on Linux (NuGet ships tools/MSIX/.../*.msix, SelfContained.targets looks for tools/Msix/.../*.Msix) -->
+  <Target Name="_WindowsCrossFixAppSdkMsixInputs"
+          AfterTargets="GetExtractMicrosoftWindowsAppSDKMsixFilesInputs"
+          Condition="'$(WindowsCrossTargets)' != '' and '$(MicrosoftWindowsAppSDKPackageDir)' != '' and '@(MicrosoftWindowsAppSDKMsix)' == ''">
+    <ItemGroup>
+      <MicrosoftWindowsAppSDKMsix Include="$([MSBuild]::NormalizeDirectory('$(MicrosoftWindowsAppSDKPackageDir)','tools/MSIX/win10-$(NativePlatform)'))Microsoft.WindowsAppRuntime.?.?.msix" />
+      <MicrosoftWindowsAppSDKMsix Include="$([MSBuild]::NormalizeDirectory('$(MicrosoftWindowsAppSDKPackageDir)','tools/MSIX/win10-$(NativePlatform)'))Microsoft.WindowsAppRuntime.?.?-*.msix" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Wrap makepri.exe and mt.exe shims via scripts/windows-cross-shim.py so Linux paths & makepri dump XML work on Linux -->
+  <Target Name="_WindowsCrossEnhanceWinSdkShims"
+          AfterTargets="_WindowsCrossWriteShims"
+          Condition="'$(WindowsCrossTargets)' != '' and '$(_WindowsCrossSdkToolsDir)' != ''">
+    <PropertyGroup>
+      <_CrossShimScript>$([MSBuild]::NormalizePath('$(MSBuildThisFileDirectory)', 'scripts', 'windows-cross-shim.py'))</_CrossShimScript>
+      <_CrossMakePriTool>$(_WindowsCrossSdkToolsDir)makepri.exe</_CrossMakePriTool>
+      <_CrossMtTool>$(_WindowsCrossSdkToolsDir)mt.exe</_CrossMtTool>
+    </PropertyGroup>
+    <ItemGroup>
+      <_CrossMakePriLines Include="#!/bin/sh" />
+      <_CrossMakePriLines Include="exec python3 &quot;$(_CrossShimScript)&quot; &quot;$(WindowsCrossWineRun)&quot; &quot;$(_CrossMakePriTool)&quot; makepri &quot;$@&quot;" />
+      <_CrossMtLines Include="#!/bin/sh" />
+      <_CrossMtLines Include="exec python3 &quot;$(_CrossShimScript)&quot; &quot;$(WindowsCrossWineRun)&quot; &quot;$(_CrossMtTool)&quot; mt &quot;$@&quot;" />
+    </ItemGroup>
+    <WriteLinesToFile File="$(MakePriExeFullPath)" Lines="@(_CrossMakePriLines)" Overwrite="true" />
+    <WriteLinesToFile File="$(_WindowsCrossShimDir)mt.sh" Lines="@(_CrossMtLines)" Overwrite="true" />
+    <Exec Command="chmod +x &quot;$(_CrossShimScript)&quot; &quot;$(MakePriExeFullPath)&quot; &quot;$(_WindowsCrossShimDir)mt.sh&quot;" />
+  </Target>
+</Project>

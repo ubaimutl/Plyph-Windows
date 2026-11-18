@@ -1,0 +1,192 @@
+<Page
+    x:Class="Plyph.Windows.UI.Pages.ActionsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="6" Padding="28,16,28,32" MaxWidth="920" HorizontalAlignment="Stretch">
+            <TextBlock Text="Actions &amp; Prompts" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="Create reusable actions or start with a template. Manage pinned actions under Toolbar."
+                       Style="{StaticResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,0,0,10" />
+
+            <TextBlock Text="Custom Actions"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="2,14,0,4" />
+            <StackPanel x:Name="CustomActionsStack" Spacing="4" />
+
+            <Expander Header="Action library"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Stretch"
+                      Margin="0,10,0,0">
+                <StackPanel x:Name="ActionLibraryStack" Spacing="6" />
+            </Expander>
+
+            <TextBlock Text="Built-in prompts"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="2,14,0,4" />
+
+            <controls:SettingsExpander Header="Built-in Action Instructions"
+                                       Description="View or customize prompts for Correct, Rewrite, Run selected prompt, and Ask."
+                                       IsExpanded="False">
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE70F;" />
+                </controls:SettingsExpander.HeaderIcon>
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard ContentAlignment="Left" HorizontalContentAlignment="Stretch">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="Correct" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock Text="System prompt &amp; personal context"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1"
+                                              x:Name="CorrectCtxToggle"
+                                              OnContent="Personal context on"
+                                              OffContent="Personal context off"
+                                              VerticalAlignment="Center"
+                                              Toggled="BuiltInCtxToggle_Toggled"
+                                              Tag="correct" />
+                            </Grid>
+                            <TextBox x:Name="CorrectPromptBox"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     HorizontalAlignment="Stretch"
+                                     MinHeight="72"
+                                     MaxHeight="150"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     TextChanged="BuiltInPromptBox_TextChanged"
+                                     Tag="prompt-correct" />
+                        </StackPanel>
+                    </controls:SettingsCard>
+
+                    <controls:SettingsCard ContentAlignment="Left" HorizontalContentAlignment="Stretch">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="Rewrite" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock Text="System prompt &amp; personal context"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1"
+                                              x:Name="RewriteCtxToggle"
+                                              OnContent="Personal context on"
+                                              OffContent="Personal context off"
+                                              VerticalAlignment="Center"
+                                              Toggled="BuiltInCtxToggle_Toggled"
+                                              Tag="rewrite" />
+                            </Grid>
+                            <TextBox x:Name="RewritePromptBox"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     HorizontalAlignment="Stretch"
+                                     MinHeight="72"
+                                     MaxHeight="150"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     TextChanged="BuiltInPromptBox_TextChanged"
+                                     Tag="prompt-rewrite" />
+                        </StackPanel>
+                    </controls:SettingsCard>
+
+                    <controls:SettingsCard ContentAlignment="Left" HorizontalContentAlignment="Stretch">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                    <TextBlock Text="Run selected prompt" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                    <TextBlock Text="System prompt &amp; personal context"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1"
+                                              x:Name="RunPromptCtxToggle"
+                                              OnContent="Personal context on"
+                                              OffContent="Personal context off"
+                                              VerticalAlignment="Center"
+                                              Toggled="BuiltInCtxToggle_Toggled"
+                                              Tag="prompt" />
+                            </Grid>
+                            <TextBox x:Name="RunPromptBox"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     HorizontalAlignment="Stretch"
+                                     MinHeight="72"
+                                     MaxHeight="150"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     TextChanged="BuiltInPromptBox_TextChanged"
+                                     Tag="prompt-run" />
+                        </StackPanel>
+                    </controls:SettingsCard>
+
+                    <controls:SettingsCard ContentAlignment="Left" HorizontalContentAlignment="Stretch">
+                        <Grid ColumnSpacing="12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                                <TextBlock Text="Ask" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                <TextBlock Text="Include personal context with Ask questions"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1"
+                                          x:Name="AskCtxToggle"
+                                          OnContent="Personal context on"
+                                          OffContent="Personal context off"
+                                          VerticalAlignment="Center"
+                                          Toggled="BuiltInCtxToggle_Toggled"
+                                          Tag="ask" />
+                        </Grid>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+
+            <controls:SettingsExpander Header="Run selected prompt options"
+                                       Description="Choose a provider, model, or token limit for Run selected prompt."
+                                       IsExpanded="False">
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE943;" />
+                </controls:SettingsExpander.HeaderIcon>
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard Header="Run Selected Prompt — Provider override"
+                                           Description="Route Run Selected Prompt to a dedicated provider.">
+                        <ComboBox x:Name="RunPromptProviderCombo" Width="220" SelectionChanged="RunPromptProviderCombo_SelectionChanged" />
+                    </controls:SettingsCard>
+                    <controls:SettingsCard Header="Run Selected Prompt — Model override"
+                                           Description="Leave empty to use the selected provider's default model.">
+                        <TextBox x:Name="RunPromptModelBox" Width="220" PlaceholderText="Optional model ID" TextChanged="RunPromptModelBox_TextChanged" />
+                    </controls:SettingsCard>
+                    <controls:SettingsCard Header="Input token limit (0 = Auto)"
+                                           Description="Rejects oversized prompts before sending.">
+                        <NumberBox x:Name="RunPromptInputLimitBox" Minimum="0" Maximum="1000000" SmallChange="1000" SpinButtonPlacementMode="Inline" Width="160" ValueChanged="RunPromptInputLimitBox_ValueChanged" />
+                    </controls:SettingsCard>
+                    <controls:SettingsCard Header="Output token limit (0 = Auto)"
+                                           Description="Maximum response tokens (ChatGPT uses Auto).">
+                        <NumberBox x:Name="RunPromptOutputLimitBox" Minimum="0" Maximum="1000000" SmallChange="500" SpinButtonPlacementMode="Inline" Width="160" ValueChanged="RunPromptOutputLimitBox_ValueChanged" />
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

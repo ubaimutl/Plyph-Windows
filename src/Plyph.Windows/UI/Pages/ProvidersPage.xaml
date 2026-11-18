@@ -1,0 +1,46 @@
+<Page
+    x:Class="Plyph.Windows.UI.Pages.ProvidersPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="6" Padding="28,16,28,32" MaxWidth="920" HorizontalAlignment="Stretch">
+            <TextBlock Text="AI Providers" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="Connect ChatGPT, Ollama, Gemini, Cloudflare, or any OpenAI-compatible server."
+                       Style="{StaticResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,0,0,10" />
+
+            <TextBlock Text="Active Provider"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="2,6,0,4" />
+
+            <controls:SettingsCard Header="Default AI provider"
+                                   Description="Used for built-in actions unless an action specifies a provider override.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE774;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="ActiveProviderCombo"
+                          AutomationProperties.AutomationId="ProvidersActiveCombo"
+                          MinWidth="240"
+                          SelectionChanged="ActiveProviderCombo_SelectionChanged" />
+            </controls:SettingsCard>
+
+            <StackPanel x:Name="DynamicProviderStack" Spacing="6" />
+
+            <TextBlock Text="Other Providers"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="2,14,0,4" />
+
+            <controls:SettingsExpander x:Name="SavedProvidersExpander"
+                                       Header="Saved OpenAI-Compatible Providers"
+                                       Description="Add or edit Groq, OpenAI, OpenRouter, Mistral, or custom API servers."
+                                       IsExpanded="False">
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE753;" />
+                </controls:SettingsExpander.HeaderIcon>
+            </controls:SettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

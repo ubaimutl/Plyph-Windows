@@ -1,0 +1,346 @@
+<Window
+    x:Class="Plyph.Windows.UI.ResultWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Plyph — Result">
+
+    <Grid x:Name="RootGrid" KeyDown="RootGrid_KeyDown">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="38" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Padding="14,0,0,0">
+            <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                <ContentPresenter x:Name="BrandLogoHost" VerticalAlignment="Center" />
+                <TextBlock x:Name="TitleBarTitleText"
+                           Text="Plyph — Result"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center" />
+                <Border Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                        CornerRadius="4"
+                        Padding="6,2"
+                        VerticalAlignment="Center">
+                    <TextBlock x:Name="ProviderBadgeText"
+                               FontSize="11"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Border>
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1" Padding="14,4,14,12" RowSpacing="8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <TextBlock x:Name="RevisionCountLabel"
+                               Text="1 of 1"
+                               FontSize="12"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               Visibility="Collapsed"
+                               VerticalAlignment="Center"
+                               Margin="0,0,4,0" />
+                    <Button x:Name="PrevButton"
+                            AutomationProperties.AutomationId="ResultPrevButton"
+                            AutomationProperties.Name="Previous revision"
+                            ToolTipService.ToolTip="Previous revision"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Visibility="Collapsed"
+                            Width="26"
+                            Height="26"
+                            Padding="0"
+                            Click="PrevButton_Click">
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE76B;" FontSize="11" />
+                    </Button>
+                    <Button x:Name="NextButton"
+                            AutomationProperties.AutomationId="ResultNextButton"
+                            AutomationProperties.Name="Next revision"
+                            ToolTipService.ToolTip="Next revision"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Visibility="Collapsed"
+                            Width="26"
+                            Height="26"
+                            Padding="0"
+                            Click="NextButton_Click">
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE76C;" FontSize="11" />
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                    <ToggleButton x:Name="ChangesButton"
+                                  AutomationProperties.AutomationId="ResultShowChangesToggle"
+                                  Visibility="Collapsed"
+                                  Height="28"
+                                  Padding="8,0"
+                                  BorderThickness="0"
+                                  Checked="ChangesButton_CheckedChanged"
+                                  Unchecked="ChangesButton_CheckedChanged">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE7E6;" FontSize="12" />
+                            <TextBlock Text="Diff" FontSize="12" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="SideBySideButton"
+                                  AutomationProperties.AutomationId="ResultSideBySideToggle"
+                                  Visibility="Collapsed"
+                                  Height="28"
+                                  Padding="8,0"
+                                  BorderThickness="0"
+                                  Checked="SideBySideButton_CheckedChanged"
+                                  Unchecked="SideBySideButton_CheckedChanged">
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8A9;" FontSize="12" />
+                            <TextBlock Text="Compare" FontSize="12" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="WrapButton"
+                                  AutomationProperties.AutomationId="ResultWrapToggle"
+                                  Content="Wrap"
+                                  FontSize="12"
+                                  Height="28"
+                                  Padding="8,0"
+                                  BorderThickness="0"
+                                  Checked="WrapButton_CheckedChanged"
+                                  Unchecked="WrapButton_CheckedChanged" />
+                    <ToggleButton x:Name="PinButton"
+                                  AutomationProperties.Name="Pin window on top"
+                                  ToolTipService.ToolTip="Pin on top while switching apps"
+                                  Width="28"
+                                  Height="28"
+                                  Padding="0"
+                                  BorderThickness="0"
+                                  Click="PinButton_Click">
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE718;" FontSize="12" />
+                    </ToggleButton>
+                    <Button x:Name="CompactButton"
+                            AutomationProperties.AutomationId="ResultCompactCardButton"
+                            ToolTipService.ToolTip="Switch to compact popup beside text"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Width="28"
+                            Height="28"
+                            Padding="0"
+                            Click="CompactButton_Click">
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8A7;" FontSize="12" />
+                    </Button>
+                    <Button x:Name="ExpandButton"
+                            AutomationProperties.AutomationId="ResultExpandButton"
+                            ToolTipService.ToolTip="Enlarge window"
+                            Style="{StaticResource SubtleButtonStyle}"
+                            Width="28"
+                            Height="28"
+                            Padding="0"
+                            Click="ExpandButton_Click">
+                        <FontIcon x:Name="ExpandIcon" FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE740;" FontSize="12" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <InfoBar Grid.Row="1"
+                     x:Name="ReplacementWarningBar"
+                     Severity="Warning"
+                     IsOpen="False"
+                     IsClosable="False" />
+
+            <Grid Grid.Row="2" RowSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition x:Name="DiscussionRowDef" Height="0" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <TextBox x:Name="ResultEditorBox"
+                             AutomationProperties.AutomationId="ResultEditorBox"
+                             AutomationProperties.Name="Generated result text"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             FontSize="14"
+                             Padding="14,12"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             TextChanged="ResultEditorBox_TextChanged" />
+
+                    <Border x:Name="DiffContainer"
+                            Visibility="Collapsed"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{StaticResource ControlCornerRadius}"
+                            Padding="14,12">
+                        <ScrollViewer x:Name="DiffScrollViewer"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Auto">
+                            <RichTextBlock x:Name="DiffRichTextBlock"
+                                           IsTextSelectionEnabled="True"
+                                           FontSize="14"
+                                           TextWrapping="Wrap" />
+                        </ScrollViewer>
+                    </Border>
+
+                    <Grid x:Name="SideBySideGrid" Visibility="Collapsed" ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <Grid Grid.Column="0" RowSpacing="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0"
+                                       Text="Original"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBox Grid.Row="1"
+                                     x:Name="OriginalReadOnlyBox"
+                                     IsReadOnly="True"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     FontSize="13.5"
+                                     Padding="12,10"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto" />
+                        </Grid>
+
+                        <Grid Grid.Column="1" RowSpacing="6">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0"
+                                       Text="Generated"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                                       Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                            <TextBox Grid.Row="1"
+                                     x:Name="SideBySideResultBox"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     FontSize="13.5"
+                                     Padding="12,10"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                     TextChanged="SideBySideResultBox_TextChanged" />
+                        </Grid>
+                    </Grid>
+                </Grid>
+
+                <Border x:Name="DiscussionPane"
+                        Grid.Row="1"
+                        Visibility="Collapsed"
+                        Background="{ThemeResource LayerFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource ControlCornerRadius}"
+                        Padding="12">
+                    <Grid RowSpacing="8">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="Discussion"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <ScrollViewer x:Name="DiscussionScrollViewer"
+                                      Grid.Row="1"
+                                      VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="DiscussionStack" Spacing="8" />
+                        </ScrollViewer>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <Grid x:Name="FollowUpRow" Grid.Row="3" Visibility="Collapsed" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0"
+                         x:Name="FollowUpInputBox"
+                         AutomationProperties.AutomationId="ResultFollowUpBox"
+                         AutomationProperties.Name="Follow-up prompt"
+                         PlaceholderText="Refine this result…"
+                         KeyDown="FollowUpInputBox_KeyDown" />
+                <Button Grid.Column="1"
+                        x:Name="FollowUpSendButton"
+                        AutomationProperties.AutomationId="ResultFollowUpSendButton"
+                        Style="{StaticResource AccentButtonStyle}"
+                        Click="FollowUpSendButton_Click">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE724;" FontSize="13" />
+                        <TextBlock Text="Send" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <InfoBar Grid.Row="4"
+                     x:Name="StatusInfoBar"
+                     Severity="Error"
+                     IsOpen="False"
+                     IsClosable="True" />
+
+            <Grid Grid.Row="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <ToggleButton x:Name="RefineToggle"
+                                  AutomationProperties.AutomationId="ResultRefineToggle"
+                                  Visibility="Collapsed"
+                                  Click="RefineToggle_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE72C;" FontSize="13" />
+                            <TextBlock Text="Refine" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="DiscussToggle"
+                                  AutomationProperties.AutomationId="ResultDiscussToggle"
+                                  Visibility="Collapsed"
+                                  Click="DiscussToggle_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8F2;" FontSize="13" />
+                            <TextBlock Text="Discuss" />
+                        </StackPanel>
+                    </ToggleButton>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <Button x:Name="CancelButton"
+                            AutomationProperties.AutomationId="ResultCancelButton"
+                            Content="Cancel"
+                            MinWidth="84"
+                            Click="CancelButton_Click" />
+                    <Button x:Name="CopyButton"
+                            AutomationProperties.AutomationId="ResultCopyButton"
+                            Click="CopyButton_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8C8;" FontSize="13" />
+                            <TextBlock Text="Copy" />
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="ReplaceButton"
+                            AutomationProperties.AutomationId="ResultReplaceButton"
+                            Content="Replace"
+                            Style="{StaticResource AccentButtonStyle}"
+                            MinWidth="96"
+                            Click="ReplaceButton_Click" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

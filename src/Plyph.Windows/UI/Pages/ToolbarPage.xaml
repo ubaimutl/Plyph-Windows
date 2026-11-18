@@ -1,0 +1,112 @@
+<Page
+    x:Class="Plyph.Windows.UI.Pages.ToolbarPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="6" Padding="28,16,28,32" MaxWidth="920">
+            <TextBlock Text="Toolbar" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="Choose what appears beside selected text."
+                       Style="{StaticResource PlyphCardDescriptionStyle}" Margin="0,0,0,8" />
+            <controls:SettingsCard Header="Show floating selection toolbar"
+                                   Description="Display the compact WinUI toolbar beside selected text across apps.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE7F4;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch x:Name="ShowFloatingToggle"
+                              AutomationProperties.AutomationId="GeneralShowFloatingToggle"
+                              Toggled="ShowFloatingToggle_Toggled" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Floating toolbar layout"
+                                   Description="Choose whether selecting text shows the Plyph button first or expands immediately.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8FD;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="ToolbarLayoutCombo"
+                          AutomationProperties.AutomationId="GeneralToolbarLayoutCombo"
+                          MinWidth="220"
+                          SelectionChanged="ToolbarLayoutCombo_SelectionChanged">
+                    <ComboBoxItem Content="Plyph button (Expand on click)" />
+                    <ComboBoxItem Content="Compact bar (Icons &amp; labels)" />
+                    <ComboBoxItem Content="Compact icons only" />
+                </ComboBox>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Floating toolbar placement"
+                                   Description="Place the toolbar beside your selected text (falls back to cursor) or near the cursor.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE81D;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="ToolbarPositionCombo"
+                          AutomationProperties.AutomationId="GeneralToolbarPositionCombo"
+                          MinWidth="230"
+                          SelectionChanged="ToolbarPositionCombo_SelectionChanged">
+                    <ComboBoxItem Content="Beside selected text (if supported)" />
+                    <ComboBoxItem Content="Near mouse cursor" />
+                </ComboBox>
+            </controls:SettingsCard>
+            <controls:SettingsCard Header="Toolbar size"
+                                   Description="Scale the floating toolbar and extended actions.">
+                <ComboBox x:Name="ScaleCombo"
+                          AutomationProperties.AutomationId="GeneralScaleCombo"
+                          MinWidth="170"
+                          SelectionChanged="ScaleCombo_SelectionChanged">
+                    <ComboBoxItem Content="0.85× (Extra compact)" />
+                    <ComboBoxItem Content="1× (Default)" />
+                    <ComboBoxItem Content="1.15×" />
+                    <ComboBoxItem Content="1.25×" />
+                    <ComboBoxItem Content="1.5×" />
+                </ComboBox>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Accent color for toolbar icon"
+                                   Description="Color the Plyph button with your Windows accent color instead of black and white.">
+                <ToggleSwitch x:Name="ToolbarAccentToggle"
+                              AutomationProperties.AutomationId="GeneralToolbarAccentToggle"
+                              Toggled="ToolbarAccentToggle_Toggled" />
+            </controls:SettingsCard>
+            <TextBlock Text="Pinned actions" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,14,0,0" />
+            <TextBlock Text="Pin up to four actions. More actions remains available from the toolbar."
+                       Style="{StaticResource PlyphCardDescriptionStyle}" />
+            <StackPanel x:Name="QuickActionsStack" Spacing="4" />
+
+            <TextBlock Text="Excluded apps" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,14,0,0" />
+            <TextBlock Text="Hide the selection toolbar in the apps you add here."
+                       Style="{StaticResource PlyphCardDescriptionStyle}" />
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="Choose running app" Click="ChooseRunningApp_Click" />
+                <Button Content="Browse for app" Click="BrowseForApp_Click" />
+            </StackPanel>
+            <InfoBar x:Name="ExclusionStatus" Severity="Informational" IsClosable="True" IsOpen="False" />
+            <StackPanel x:Name="ExcludedAppsStack" Spacing="4" />
+
+            <TextBlock Text="Status notifications" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,14,0,4" />
+            <controls:SettingsCard Header="Show status toast notifications"
+                                   Description="Display lightweight on-screen progress while actions run.">
+                <ToggleSwitch x:Name="FeedbackToggle"
+                              AutomationProperties.AutomationId="GeneralFeedbackToggle"
+                              Toggled="FeedbackToggle_Toggled" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Notification location"
+                                   Description="Where status toasts appear on the active monitor.">
+                <ComboBox x:Name="FeedbackPosCombo"
+                          AutomationProperties.AutomationId="GeneralFeedbackPosCombo"
+                          MinWidth="160"
+                          SelectionChanged="FeedbackPosCombo_SelectionChanged">
+                    <ComboBoxItem Content="Top left" />
+                    <ComboBoxItem Content="Top center" />
+                    <ComboBoxItem Content="Top right" />
+                    <ComboBoxItem Content="Center left" />
+                    <ComboBoxItem Content="Center" />
+                    <ComboBoxItem Content="Center right" />
+                    <ComboBoxItem Content="Bottom left" />
+                    <ComboBoxItem Content="Bottom center" />
+                    <ComboBoxItem Content="Bottom right" />
+                </ComboBox>
+            </controls:SettingsCard>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

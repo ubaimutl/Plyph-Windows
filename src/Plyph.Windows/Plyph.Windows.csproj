@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>Plyph.Windows</RootNamespace>
+    <AssemblyName Condition="'$(PortableBuild)' != 'true'">Plyph</AssemblyName>
+    <AssemblyName Condition="'$(PortableBuild)' == 'true'">Plyph-Portable</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\Plyph.ico</ApplicationIcon>
+    <Platforms>x64;arm64</Platforms>
+    <PlatformTarget Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</PlatformTarget>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType Condition="'$(MsixPackageBuild)' != 'true'">None</WindowsPackageType>
+    <WindowsAppSDKSelfContained Condition="'$(MsixPackageBuild)' != 'true'">true</WindowsAppSDKSelfContained>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    <DefineConstants Condition="'$(PortableBuild)' == 'true'">$(DefineConstants);PLYPH_PORTABLE</DefineConstants>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <Version>1.0.0</Version>
+    <Product>Plyph</Product>
+    <Description>Use AI on selected text anywhere in Windows (WinUI 3).</Description>
+    <Copyright>Copyright (C) 2026 ubai.dev — GPL-3.0</Copyright>
+    <!-- Publish props for single-dir portable extraction or setup -->
+    <SelfContained Condition="'$(SelfContained)' == ''">true</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260921001"
+                      Condition="'$(MsixPackageBuild)' == 'true' or '$(WindowsCrossTargets)' != ''" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="1.8.260803003"
+                      Condition="'$(MsixPackageBuild)' != 'true' and '$(WindowsCrossTargets)' == ''" />
+    <!-- SettingsControls references the pre-component SDK. Use its WinUI 1.8 replacement above. -->
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" ExcludeAssets="all"
+                      Condition="'$(MsixPackageBuild)' != 'true' and '$(WindowsCrossTargets)' == ''" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.9457" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinUIAnalyzer" Version="0.8.0" PrivateAssets="all" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+    <PackageReference Include="System.Drawing.Common" Version="8.0.34" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Plyph.Core\Plyph.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+    <Content Include="Assets\ActionIcons\*.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\Plyph.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\Square44x44Logo.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\Square150x150Logo.png" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\StoreLogo.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

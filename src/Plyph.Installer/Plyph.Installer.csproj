@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>Plyph.Installer</RootNamespace>
+    <AssemblyName>Plyph-Setup</AssemblyName>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <Version>1.0.0</Version>
+    <Product>Plyph Setup</Product>
+    <Description>Installer and Uninstaller for Plyph for Windows.</Description>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('$(PayloadZipPath)')">
+    <EmbeddedResource Include="$(PayloadZipPath)" LogicalName="Plyph.Payload.zip" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('$(PayloadExePath)')">
+    <EmbeddedResource Include="$(PayloadExePath)" LogicalName="Plyph.Payload.exe" />
+  </ItemGroup>
+
+</Project>

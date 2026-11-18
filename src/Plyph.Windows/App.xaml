@@ -1,0 +1,62 @@
+<Application
+    x:Class="Plyph.Windows.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+            </ResourceDictionary.MergedDictionaries>
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="DiffAddedBackgroundBrush" Color="#FFD4F4DD" />
+                    <SolidColorBrush x:Key="DiffAddedForegroundBrush" Color="#FF0B5F2A" />
+                    <SolidColorBrush x:Key="DiffRemovedBackgroundBrush" Color="#FFFDE0E2" />
+                    <SolidColorBrush x:Key="DiffRemovedForegroundBrush" Color="#FF9E1C24" />
+                    <SolidColorBrush x:Key="UserBubbleBackgroundBrush" Color="#FFE8F2FC" />
+                    <SolidColorBrush x:Key="AssistantBubbleBackgroundBrush" Color="#FFFFFFFF" />
+                    <SolidColorBrush x:Key="WindowFallbackBackgroundBrush" Color="#FFF3F3F3" />
+                    <SolidColorBrush x:Key="PopupSurfaceBackgroundBrush" Color="#FFF9F9FB" />
+                    <SolidColorBrush x:Key="PopupSurfaceOverlayBrush" Color="#B0FFFFFF" />
+                    <SolidColorBrush x:Key="PopupSurfaceBorderBrush" Color="#24000000" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="DiffAddedBackgroundBrush" Color="#FF19452B" />
+                    <SolidColorBrush x:Key="DiffAddedForegroundBrush" Color="#FFB9F6CA" />
+                    <SolidColorBrush x:Key="DiffRemovedBackgroundBrush" Color="#FF58252B" />
+                    <SolidColorBrush x:Key="DiffRemovedForegroundBrush" Color="#FFFFCDD2" />
+                    <SolidColorBrush x:Key="UserBubbleBackgroundBrush" Color="#FF1E3A5F" />
+                    <SolidColorBrush x:Key="AssistantBubbleBackgroundBrush" Color="#FF2D2D30" />
+                    <SolidColorBrush x:Key="WindowFallbackBackgroundBrush" Color="#FF202020" />
+                    <SolidColorBrush x:Key="PopupSurfaceBackgroundBrush" Color="#FF27272A" />
+                    <SolidColorBrush x:Key="PopupSurfaceOverlayBrush" Color="#90242427" />
+                    <SolidColorBrush x:Key="PopupSurfaceBorderBrush" Color="#24FFFFFF" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="HighContrast">
+                    <StaticResource x:Key="DiffAddedBackgroundBrush" ResourceKey="SystemColorHighlightColorBrush" />
+                    <StaticResource x:Key="DiffAddedForegroundBrush" ResourceKey="SystemColorHighlightTextColorBrush" />
+                    <StaticResource x:Key="DiffRemovedBackgroundBrush" ResourceKey="SystemColorWindowColorBrush" />
+                    <StaticResource x:Key="DiffRemovedForegroundBrush" ResourceKey="SystemColorGrayTextColorBrush" />
+                    <StaticResource x:Key="UserBubbleBackgroundBrush" ResourceKey="SystemColorButtonFaceColorBrush" />
+                    <StaticResource x:Key="AssistantBubbleBackgroundBrush" ResourceKey="SystemColorWindowColorBrush" />
+                    <StaticResource x:Key="WindowFallbackBackgroundBrush" ResourceKey="SystemColorWindowColorBrush" />
+                    <StaticResource x:Key="PopupSurfaceBackgroundBrush" ResourceKey="SystemColorWindowColorBrush" />
+                    <StaticResource x:Key="PopupSurfaceOverlayBrush" ResourceKey="SystemColorWindowColorBrush" />
+                    <StaticResource x:Key="PopupSurfaceBorderBrush" ResourceKey="SystemColorWindowTextColorBrush" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+            <Style x:Key="PlyphFullWidthCardStyle" TargetType="Border">
+                <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+                <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="{ThemeResource ControlCornerRadius}" />
+                <Setter Property="Padding" Value="16,12" />
+            </Style>
+            <Style x:Key="PlyphCardDescriptionStyle" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+                <Setter Property="TextWrapping" Value="Wrap" />
+                <Setter Property="FontSize" Value="12" />
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

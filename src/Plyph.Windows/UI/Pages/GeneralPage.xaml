@@ -1,0 +1,129 @@
+<Page
+    x:Class="Plyph.Windows.UI.Pages.GeneralPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="6" Padding="28,16,28,32" MaxWidth="920" HorizontalAlignment="Stretch">
+            <TextBlock Text="General" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="Choose your appearance, result preview, and startup preferences."
+                       Style="{StaticResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,0,0,10" />
+
+            <InfoBar x:Name="ModeInfoBar"
+                     Severity="Informational"
+                     IsOpen="True"
+                     IsClosable="False"
+                     Margin="0,0,0,8">
+                <InfoBar.ActionButton>
+                    <Button x:Name="OpenDataFolderButton"
+                            AutomationProperties.AutomationId="GeneralOpenFolderButton"
+                            Content="Open folder"
+                            Click="OpenDataFolderButton_Click" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+
+            <TextBlock Text="Essentials"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="2,8,0,4" />
+
+            <controls:SettingsCard Header="App theme"
+                                   Description="Choose whether Plyph windows and floating popups follow Windows Light or Dark mode.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE771;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="ThemeCombo"
+                          AutomationProperties.AutomationId="GeneralThemeCombo"
+                          MinWidth="180"
+                          SelectionChanged="ThemeCombo_SelectionChanged">
+                    <ComboBoxItem Content="Use system setting" Tag="system" />
+                    <ComboBoxItem Content="Light" Tag="light" />
+                    <ComboBoxItem Content="Dark" Tag="dark" />
+                </ComboBox>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Name="StartupCard"
+                                   Header="Launch Plyph at Windows startup"
+                                   Description="Start Plyph automatically in the system tray when you sign in.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE7E8;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch x:Name="StartupToggle"
+                              AutomationProperties.AutomationId="GeneralStartupToggle"
+                              Toggled="StartupToggle_Toggled" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Result popup background"
+                                   Description="Use the Windows backdrop or a solid surface that follows the app theme.">
+                <ComboBox x:Name="PopupAppearanceCombo"
+                          AutomationProperties.Name="Result popup background"
+                          MinWidth="160"
+                          SelectionChanged="PopupAppearanceCombo_SelectionChanged">
+                    <ComboBoxItem Content="Windows backdrop" />
+                    <ComboBoxItem Content="Solid" />
+                </ComboBox>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Preview before replacing"
+                                   Description="Review, edit, or refine AI output before replacing your selected text.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8A1;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ToggleSwitch x:Name="PreviewToggle"
+                              AutomationProperties.AutomationId="GeneralPreviewToggle"
+                              Toggled="PreviewToggle_Toggled" />
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Result preview style"
+                                   Description="Show results in an inline popup beside your selection or open a separate window.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE8A7;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="ResultPopupModeCombo"
+                          AutomationProperties.AutomationId="GeneralResultModeCombo"
+                          MinWidth="230"
+                          SelectionChanged="ResultPopupModeCombo_SelectionChanged">
+                    <ComboBoxItem Content="Inline popup (Enlarge long text)" />
+                    <ComboBoxItem Content="Always compact inline popup" />
+                    <ComboBoxItem Content="Full workspace window" />
+                </ComboBox>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Dismiss popup on outside click"
+                                   Description="Close the compact popup when you click elsewhere. Pinned popups stay open.">
+                <ToggleSwitch x:Name="DismissOutsideToggle"
+                              AutomationProperties.Name="Dismiss popup on outside click"
+                              Toggled="DismissOutsideToggle_Toggled" />
+            </controls:SettingsCard>
+
+            <TextBlock Text="More options"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="2,14,0,4" />
+
+            <controls:SettingsExpander Header="Preview &amp; Formatting Details"
+                                       Description="Comparison diff view and plain-text formatting defaults."
+                                       IsExpanded="False">
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE7E6;" />
+                </controls:SettingsExpander.HeaderIcon>
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard Header="Show diff changes by default"
+                                           Description="Open transformed-text previews in comparison highlight mode.">
+                        <ToggleSwitch x:Name="DiffDefaultToggle"
+                                      AutomationProperties.AutomationId="GeneralDiffDefaultToggle"
+                                      Toggled="DiffDefaultToggle_Toggled" />
+                    </controls:SettingsCard>
+
+                    <controls:SettingsCard Header="Prefer plain text responses"
+                                           Description="Avoid Markdown formatting unless requested or already present in the selection.">
+                        <ToggleSwitch x:Name="PlainTextToggle"
+                                      AutomationProperties.AutomationId="GeneralPlainTextToggle"
+                                      Toggled="PlainTextToggle_Toggled" />
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

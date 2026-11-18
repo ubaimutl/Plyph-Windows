@@ -1,0 +1,10 @@
+bin/
+obj/
+.mono/
+.vs/
+.idea/
+*.user
+*.suo
+dist/
+out/
+AppPackages/

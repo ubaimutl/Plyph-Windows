@@ -1,0 +1,55 @@
+name: Build Plyph for Windows (Portable & Installer)
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build Portable and Installer packages
+        shell: pwsh
+        run: ./scripts/build-windows.ps1
+
+      - name: Upload Portable Folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: Plyph-Portable
+          path: dist/Plyph-Portable/
+
+      - name: Upload Portable ZIP Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: Plyph-Portable-Zip
+          path: dist/Plyph-Portable-win-x64.zip
+
+      - name: Upload Windows Installer (Plyph-Setup.exe)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Plyph-Setup-Installer
+          path: dist/Plyph-Setup.exe
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            dist/Plyph-Portable-win-x64.zip
+            dist/Plyph-Setup.exe

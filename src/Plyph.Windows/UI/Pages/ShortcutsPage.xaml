@@ -1,0 +1,132 @@
+<Page
+    x:Class="Plyph.Windows.UI.Pages.ShortcutsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="6" Padding="28,16,28,32" MaxWidth="920" HorizontalAlignment="Stretch">
+            <TextBlock Text="Shortcuts &amp; Capture" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock Text="Configure global Windows hotkeys and fine-tune how Plyph reads selected text."
+                       Style="{StaticResource BodyTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Margin="0,0,0,10" />
+
+            <TextBlock Text="Global Keyboard Shortcuts"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="2,6,0,4" />
+
+            <controls:SettingsCard x:Name="AskShortcutCard"
+                                   Header="Ask"
+                                   Description="Prompt AI with a question about your selected text.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE897;" />
+                </controls:SettingsCard.HeaderIcon>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button x:Name="AskShortcutButton" AutomationProperties.AutomationId="AskShortcutBtn" MinWidth="136" Click="ShortcutRecord_Click" Tag="ask-shortcut" />
+                    <Button x:Name="AskClearButton" AutomationProperties.AutomationId="AskClearBtn" Content="Clear" Click="ShortcutClear_Click" Tag="ask-shortcut" />
+                </StackPanel>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Name="CorrectShortcutCard"
+                                   Header="Correct"
+                                   Description="Fix grammar, spelling, and punctuation immediately.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE73E;" />
+                </controls:SettingsCard.HeaderIcon>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button x:Name="CorrectShortcutButton" AutomationProperties.AutomationId="CorrectShortcutBtn" MinWidth="136" Click="ShortcutRecord_Click" Tag="correct-shortcut" />
+                    <Button x:Name="CorrectClearButton" AutomationProperties.AutomationId="CorrectClearBtn" Content="Clear" Click="ShortcutClear_Click" Tag="correct-shortcut" />
+                </StackPanel>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Name="RewriteShortcutCard"
+                                   Header="Rewrite"
+                                   Description="Improve clarity and natural flow.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE70F;" />
+                </controls:SettingsCard.HeaderIcon>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button x:Name="RewriteShortcutButton" AutomationProperties.AutomationId="RewriteShortcutBtn" MinWidth="136" Click="ShortcutRecord_Click" Tag="rewrite-shortcut" />
+                    <Button x:Name="RewriteClearButton" AutomationProperties.AutomationId="RewriteClearBtn" Content="Clear" Click="ShortcutClear_Click" Tag="rewrite-shortcut" />
+                </StackPanel>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard x:Name="ActionsShortcutCard"
+                                   Header="Open actions"
+                                   Description="Show the floating actions menu anywhere.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE945;" />
+                </controls:SettingsCard.HeaderIcon>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Button x:Name="ActionsShortcutButton" AutomationProperties.AutomationId="ActionsShortcutBtn" MinWidth="136" Click="ShortcutRecord_Click" Tag="actions-shortcut" />
+                    <Button x:Name="ActionsClearButton" AutomationProperties.AutomationId="ActionsClearBtn" Content="Clear" Click="ShortcutClear_Click" Tag="actions-shortcut" />
+                </StackPanel>
+            </controls:SettingsCard>
+
+            <controls:SettingsCard Header="Open actions menu position"
+                                   Description="Where the actions menu appears when triggered via global shortcut.">
+                <controls:SettingsCard.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE81D;" />
+                </controls:SettingsCard.HeaderIcon>
+                <ComboBox x:Name="PalettePosCombo"
+                          AutomationProperties.AutomationId="ShortcutsPalettePosCombo"
+                          MinWidth="170"
+                          SelectionChanged="PalettePosCombo_SelectionChanged">
+                    <ComboBoxItem Content="Near cursor" />
+                    <ComboBoxItem Content="Center of screen" />
+                </ComboBox>
+            </controls:SettingsCard>
+
+            <TextBlock Text="Capture &amp; Troubleshooting"
+                       Style="{StaticResource BodyStrongTextBlockStyle}"
+                       Margin="2,14,0,4" />
+
+            <controls:SettingsExpander Header="Windows Text Capture Methods"
+                                       Description="How Plyph reads selected text across Windows apps (defaults work for most users)."
+                                       IsExpanded="False">
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xE765;" />
+                </controls:SettingsExpander.HeaderIcon>
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard Header="Windows UI Automation"
+                                           Description="Read selected text and screen bounds directly from supported apps without touching the clipboard.">
+                        <ToggleSwitch x:Name="UiaToggle" AutomationProperties.AutomationId="CaptureUiaToggle" Toggled="UiaToggle_Toggled" />
+                    </controls:SettingsCard>
+
+                    <controls:SettingsCard Header="Mouse &amp; Shift+Arrow selection fallback"
+                                           Description="Detect intentional text selection gestures in custom editors when UI Automation is unavailable.">
+                        <ToggleSwitch x:Name="MouseFallbackToggle" AutomationProperties.AutomationId="CaptureMouseFallbackToggle" Toggled="MouseFallbackToggle_Toggled" />
+                    </controls:SettingsCard>
+
+                    <controls:SettingsCard Header="Use clipboard when nothing is selected"
+                                           Description="Allow global shortcuts and tray actions to fall back to the current clipboard text.">
+                        <ToggleSwitch x:Name="ClipboardFallbackToggle" AutomationProperties.AutomationId="CaptureClipboardFallbackToggle" Toggled="ClipboardFallbackToggle_Toggled" />
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+
+            <controls:SettingsExpander Header="Troubleshooting &amp; Request Logs"
+                                       Description="Record sanitized request metadata (provider, model, token estimate, HTTP status)."
+                                       IsExpanded="False">
+                <controls:SettingsExpander.HeaderIcon>
+                    <FontIcon FontFamily="{ThemeResource SymbolThemeFontFamily}" Glyph="&#xEBE8;" />
+                </controls:SettingsExpander.HeaderIcon>
+                <controls:SettingsExpander.Items>
+                    <controls:SettingsCard Header="Log request diagnostics"
+                                           Description="Never records selected text or API keys — only sanitized status metadata.">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Button x:Name="ViewLogsButton"
+                                    AutomationProperties.AutomationId="DiagnosticsViewLogsBtn"
+                                    Content="View logs"
+                                    Click="ViewLogsButton_Click" />
+                            <ToggleSwitch x:Name="DebugLoggingToggle"
+                                          AutomationProperties.AutomationId="DiagnosticsToggle"
+                                          Toggled="DebugLoggingToggle_Toggled" />
+                        </StackPanel>
+                    </controls:SettingsCard>
+                </controls:SettingsExpander.Items>
+            </controls:SettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
