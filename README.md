@@ -35,6 +35,12 @@
 Select text in an application, choose an action from the floating toolbar, then preview, refine, copy, or replace the result.
 
 <p align="center">
+  <img src="docs/media/Plyph-Demo.gif" width="860" alt="Plyph demo showing text selection, the floating toolbar, and the result preview in Windows">
+</p>
+
+---
+
+<p align="center">
   <img src="docs/media/Plyph-General-and-Toolbar.png" width="860" alt="Plyph Settings showing Actions and Prompts alongside AI Providers">
 </p>
 
